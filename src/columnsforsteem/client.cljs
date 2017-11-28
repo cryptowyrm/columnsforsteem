@@ -57,7 +57,10 @@
 (defn column-component [column]
   [ui/paper {:z-depth 2
              :style {:margin 10
-                     :flex 1}}
+                     :flex 1
+                     :display "flex"
+                     :flex-direction "column"
+                     :overflow "hidden"}}
    [:h3 {:style {:background (color :blue500)
                  :color "white"
                  :margin 0
@@ -66,19 +69,23 @@
    [ui/flat-button {:label "Load data"
                     :on-click (fn []
                                 (load-column column))}]
-   [:div {:style {:padding 10}}
-    (for [item (:data @column)]
-      [ui/card {:container-style {:margin-bottom 10}}
-       [ui/card-header {:title (get item "author")
-                        :avatar (avatar-url item)
-                        :subtitle (format-time (get item "created"))}]
-       [ui/card-media
-        [:img {:src (parseImageUrl item)}]]
-       [ui/card-text
-        (get item "title")]
-       [ui/card-actions
-        [ui/flat-button {:label "Read on Steemit"}]
-        [ui/flat-button {:label "Read on Busy"}]]])]])
+   [:div {:style {:overflow "hidden"
+                  :flex 1}}
+    [:div {:style {:height "100%"
+                   :overflow-y "scroll"}}
+     [:div
+      (for [item (:data @column)]
+        [ui/card {:container-style {:margin-bottom 10}}
+         [ui/card-header {:title (get item "author")
+                          :avatar (avatar-url item)
+                          :subtitle (format-time (get item "created"))}]
+         [ui/card-media
+          [:img {:src (parseImageUrl item)}]]
+         [ui/card-text
+          (get item "title")]
+         [ui/card-actions
+          [ui/flat-button {:label "Read on Steemit"}]
+          [ui/flat-button {:label "Read on Busy"}]]])]]]])
 
 ; reagent component to be rendered
 (defn content []
@@ -90,7 +97,7 @@
       [ui/app-bar {:title "Columns for Steem"}]
       [:div {:style {:display "flex"
                      :flex-direction "row"
-                     :flex 1}}
+                     :overflow "hidden"}}
        (for [column @columns]
          [column-component column])]]]))
 
