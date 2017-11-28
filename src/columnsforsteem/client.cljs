@@ -59,23 +59,33 @@
         (swap! column assoc :data parsed)))))
 
 
-(defn column-component [column]
+(defn column-component [column remove-fn]
   (let [scroll-view (r/atom nil)]
-    (fn [column]
+    (fn [column remove-fn]
       [ui/paper {:z-depth 2
                  :style {:margin 10
                          :flex 1
                          :display "flex"
                          :flex-direction "column"
                          :overflow "hidden"}}
-       [:h3 {:style {:background (color :blue500)
-                     :color "white"
-                     :margin 0
-                     :padding 10}
-             :on-click (fn []
-                         (when @scroll-view
-                           (set! (.-scrollTop @scroll-view) 0)))}
-        (:path @column)]
+       [:div {:style {:background (color :blue500)
+                      :color "white"
+                      :padding 10
+                      :display "flex"
+                      :align-items "center"}}
+        [:h3 {:style {:margin 0
+                      :flex 1}
+              :on-click (fn []
+                          (when @scroll-view
+                            (set! (.-scrollTop @scroll-view) 0)))}
+         (:path @column)]
+        [ui/icon-button {:tooltip "Close this column"
+                         :tooltip-position "bottom-left"
+                         :style {:padding 0
+                                 :width "auto"
+                                 :height "auto"}
+                         :on-click remove-fn}
+         [ic/navigation-close]]]
        [:div {:style {:overflow "hidden"
                       :flex 1}}
         [:div {:ref (fn [el]
@@ -100,6 +110,11 @@
               [ui/flat-button {:label "Read on Steemit"}]
               [ui/flat-button {:label "Read on Busy"}]]])]]]])))
 
+(defn remove-column [column]
+  (let [columns (r/cursor app-state [:columns])]
+    (swap! columns (fn [old]
+                     (filterv #(not (= % column)) old)))))
+
 ; reagent component to be rendered
 (defn content []
   (let [columns (r/cursor app-state [:columns])]
@@ -112,8 +127,9 @@
                      :flex-direction "row"
                      :overflow "hidden"
                      :flex 1}}
-       (for [column @columns]
-         [column-component column])]]]))
+       (for [[index column] (map-indexed vector @columns)]
+         ^{:key index}
+         [column-component column #(remove-column column)])]]]))
 
 ; tells reagent to begin rendering
 (r/render-component [content]
