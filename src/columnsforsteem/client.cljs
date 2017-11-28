@@ -66,14 +66,14 @@
                  :margin 0
                  :padding 10}}
     (:path @column)]
-   [ui/flat-button {:label "Load data"
-                    :on-click (fn []
-                                (load-column column))}]
    [:div {:style {:overflow "hidden"
                   :flex 1}}
     [:div {:style {:height "100%"
                    :overflow-y "scroll"}}
-     [:div
+     [:div {:style {:padding 10}}
+      [ui/flat-button {:label "Load data"
+                       :on-click (fn []
+                                   (load-column column))}]
       (for [item (:data @column)]
         [ui/card {:container-style {:margin-bottom 10}}
          [ui/card-header {:title (get item "author")
