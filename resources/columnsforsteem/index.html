@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <style>
+      body {
+      	margin: 0px;
+      }
+      
+      #app {
+      	height: 100%;
+      	width: 100%;
+      	display: flex;
+      }
+    </style>
+  </head>
+<body>
+    <div id="app"></div>
+  	<script src="dsteem.js"></script>
+  	<script>
+  		window.steem = new dsteem.Client("https://api.steemit.com");
+  	</script>
+    <!-- don't change this! -->
+    <script src="main.js"></script>
+</body>
+</html>
