@@ -69,7 +69,9 @@
                          :flex 1
                          :display "flex"
                          :flex-direction "column"
-                         :overflow "hidden"}}
+                         :overflow "hidden"
+                         :min-width 300
+                         :max-width 500}}
        [:div {:style {:background (color :blue500)
                       :color "white"
                       :padding 10
@@ -98,7 +100,8 @@
         [:div {:ref (fn [el]
                       (reset! scroll-view el))
                :style {:height "100%"
-                       :overflow-y "auto"}}
+                       :overflow-y "auto"
+                       :overflow-x "hidden"}}
          [:div {:style {:padding 10}}
           [ui/flat-button {:label "Load data"
                            :on-click (fn []
@@ -136,7 +139,8 @@
       [ui/mui-theme-provider {:mui-theme (get-mui-theme)}
        [:div {:style {:display "flex"
                       :flex-direction "column"
-                      :flex 1}}
+                      :flex 1
+                      :overflow "hidden"}}
         [ui/app-bar {:title "Columns for Steem"
                      :icon-element-right
                      (r/as-element
@@ -174,6 +178,7 @@
         [:div {:style {:display "flex"
                        :flex-direction "row"
                        :overflow "hidden"
+                       :overflow-x "auto"
                        :flex 1}}
          (for [[index column] (map-indexed vector @columns)]
            ^{:key index}
