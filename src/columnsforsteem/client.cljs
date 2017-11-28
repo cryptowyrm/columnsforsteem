@@ -19,7 +19,9 @@
     (let [parsed (js/JSON.parse (get post "json_metadata"))
           meta (js->clj parsed)
           images (get meta "image")]
-      (if-not (nil? images)
+      (if-not (or (nil? images)
+                  (empty? images)
+                  (empty? (first images)))
         (first images)
         nil))))
 
@@ -36,7 +38,7 @@
   (.then
     (js/steem.database.getDiscussions
       path
-      (clj->js {:limit 10
+      (clj->js {:limit 100
                 :tag tag}))
     (fn [result]
       (js/console.log result)
