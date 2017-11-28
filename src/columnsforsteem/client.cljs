@@ -69,7 +69,7 @@
    [:div {:style {:overflow "hidden"
                   :flex 1}}
     [:div {:style {:height "100%"
-                   :overflow-y "scroll"}}
+                   :overflow-y "auto"}}
      [:div {:style {:padding 10}}
       [ui/flat-button {:label "Load data"
                        :on-click (fn []
@@ -97,7 +97,8 @@
       [ui/app-bar {:title "Columns for Steem"}]
       [:div {:style {:display "flex"
                      :flex-direction "row"
-                     :overflow "hidden"}}
+                     :overflow "hidden"
+                     :flex 1}}
        (for [column @columns]
          [column-component column])]]]))
 
