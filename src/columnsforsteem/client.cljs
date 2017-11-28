@@ -86,6 +86,7 @@
      [:div {:style {:display "flex"
                     :flex-direction "column"
                     :flex 1}}
+      [ui/app-bar {:title "Columns for Steem"}]
       [:div {:style {:display "flex"
                      :flex-direction "row"
                      :flex 1}}
