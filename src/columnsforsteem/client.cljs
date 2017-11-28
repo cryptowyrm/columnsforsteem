@@ -51,7 +51,9 @@
 (defn load-column [column]
   (getDiscussions
     (:path @column)
-    ""
+    (if-let [tag (:tag @column)]
+      tag
+      "")
     :callback
     (fn [result]
       (println "Callback called")
@@ -117,19 +119,55 @@
 
 ; reagent component to be rendered
 (defn content []
-  (let [columns (r/cursor app-state [:columns])]
-    [ui/mui-theme-provider {:mui-theme (get-mui-theme)}
-     [:div {:style {:display "flex"
-                    :flex-direction "column"
-                    :flex 1}}
-      [ui/app-bar {:title "Columns for Steem"}]
-      [:div {:style {:display "flex"
-                     :flex-direction "row"
-                     :overflow "hidden"
-                     :flex 1}}
-       (for [[index column] (map-indexed vector @columns)]
-         ^{:key index}
-         [column-component column #(remove-column column)])]]]))
+  (let [columns (r/cursor app-state [:columns])
+        show-column-dialog (r/atom false)
+        dialog-input (r/atom "")]
+    (fn []
+      [ui/mui-theme-provider {:mui-theme (get-mui-theme)}
+       [:div {:style {:display "flex"
+                      :flex-direction "column"
+                      :flex 1}}
+        [ui/app-bar {:title "Columns for Steem"
+                     :icon-element-right
+                     (r/as-element
+                       [ui/flat-button
+                        {:label "Add column"
+                         :on-click #(reset! show-column-dialog true)}])}]
+        [ui/dialog {:title "Add a new column"
+                    :open @show-column-dialog
+                    :on-request-close (fn []
+                                        (reset! show-column-dialog false))
+                    :actions
+                    [(r/as-element
+                       [ui/flat-button
+                        {:label "Cancel"
+                         :primary true
+                         :on-click (fn []
+                                     (reset! show-column-dialog
+                                       false))}])
+                     (r/as-element
+                       [ui/flat-button
+                        {:label "Add column"
+                         :primary true
+                         :on-click (fn []
+                                     (reset! show-column-dialog false)
+                                     (swap!
+                                       columns
+                                       conj
+                                       (r/atom {:path "created"
+                                                :tag @dialog-input})))}])]}
+         [ui/text-field {:full-width true
+                         :floating-label-text
+                           "#hashtag, @username or leave empty"
+                         :on-change (fn [e value]
+                                      (reset! dialog-input value))}]]
+        [:div {:style {:display "flex"
+                       :flex-direction "row"
+                       :overflow "hidden"
+                       :flex 1}}
+         (for [[index column] (map-indexed vector @columns)]
+           ^{:key index}
+           [column-component column #(remove-column column)])]]])))
 
 ; tells reagent to begin rendering
 (r/render-component [content]
