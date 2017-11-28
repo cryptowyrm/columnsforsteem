@@ -115,8 +115,12 @@
              [ui/card-text
               (get item "title")]
              [ui/card-actions
-              [ui/flat-button {:label "Read on Steemit"}]
-              [ui/flat-button {:label "Read on Busy"}]]])]]]])))
+              [:a {:target "_blank"
+                   :href (str "https://www.steemit.com" (get item "url"))}
+               [ui/flat-button {:label "Read on Steemit"}]]
+              [:a {:target "_blank"
+                   :href (str "https://www.busy.org" (get item "url"))}
+               [ui/flat-button {:label "Read on Busy"}]]]])]]]])))
 
 (defn remove-column [column]
   (let [columns (r/cursor app-state [:columns])]
