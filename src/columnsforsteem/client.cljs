@@ -81,6 +81,11 @@
                           (when @scroll-view
                             (set! (.-scrollTop @scroll-view) 0)))}
          (:path @column)]
+        (if-not (empty? (:tag @column))
+           [ui/chip {:label-style {:line-height "24px"}
+                     :label-color (color :white)
+                     :background-color (color :blue300)}
+            (str "#" (:tag @column))])
         [ui/icon-button {:tooltip "Close this column"
                          :tooltip-position "bottom-left"
                          :style {:padding 0
