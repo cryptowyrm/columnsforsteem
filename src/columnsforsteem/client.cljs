@@ -56,7 +56,8 @@
 
 (defn column-component [column]
   [ui/paper {:z-depth 2
-             :style {:margin 10}}
+             :style {:margin 10
+                     :flex 1}}
    [:h3 {:style {:background (color :blue500)
                  :color "white"
                  :margin 0
