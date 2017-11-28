@@ -99,6 +99,7 @@
                            :on-click (fn []
                                        (load-column column))}]
           (for [item (:data @column)]
+            ^{:key (get item "id")}
             [ui/card {:container-style {:margin-bottom 10}}
              [ui/card-header {:title (get item "author")
                               :avatar (avatar-url item)
