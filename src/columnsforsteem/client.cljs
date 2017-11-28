@@ -55,13 +55,10 @@
 
 
 (defn column-component [column]
-  [:div {:style {:background "silver"
-                 :display "flex"
-                 :flex-direction "column"
-                 :flex 1
-                 :box-shadow "inset 1px 0px 1px 0 #fff6"
-                 :border-right "1px solid black"}}
-   [:h3 {:style {:background "#aaa"
+  [ui/paper {:z-depth 2
+             :style {:margin 10}}
+   [:h3 {:style {:background (color :blue500)
+                 :color "white"
                  :margin 0
                  :padding 10}}
     (:path @column)]
