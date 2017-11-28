@@ -15,16 +15,19 @@
 
 (defn parseImageUrl [post]
   (if (empty? (get post "json_metadata"))
-    ""
+    nil
     (let [parsed (js/JSON.parse (get post "json_metadata"))
           meta (js->clj parsed)
           images (get meta "image")]
       (if-not (nil? images)
         (first images)
-        ""))))
+        nil))))
 
 (defn avatar-url [post]
   (str "https://steemitimages.com/u/" (get post "author") "/avatar/small"))
+
+(defn cached-image [url]
+  (str "https://steemitimages.com/640x480/" url))
 
 (defn format-time [time]
   (.toLocaleString (js/Date. (str time "Z"))))
@@ -79,8 +82,9 @@
          [ui/card-header {:title (get item "author")
                           :avatar (avatar-url item)
                           :subtitle (format-time (get item "created"))}]
-         [ui/card-media
-          [:img {:src (parseImageUrl item)}]]
+         (if-let [image (parseImageUrl item)]
+           [ui/card-media
+            [:img {:src (cached-image image)}]])
          [ui/card-text
           (get item "title")]
          [ui/card-actions
