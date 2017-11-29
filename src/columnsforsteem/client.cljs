@@ -220,6 +220,7 @@
         [ui/dialog {:title "Add a new column"
                     :open @show-column-dialog
                     :on-request-close (fn []
+                                        (reset! dialog-input "")
                                         (reset! show-column-dialog false))
                     :actions
                     [(r/as-element
@@ -227,6 +228,7 @@
                         {:label "Cancel"
                          :primary true
                          :on-click (fn []
+                                     (reset! dialog-input "")
                                      (reset! show-column-dialog
                                        false))}])
                      (r/as-element
@@ -236,10 +238,10 @@
                          :on-click (fn []
                                      (when (not (has-whitespace @dialog-input))
                                        (reset! show-column-dialog false)
-                                       (add-column @dialog-input)))}])]}
+                                       (add-column @dialog-input)
+                                       (reset! dialog-input "")))}])]}
          [ui/text-field {:full-width true
                          :auto-focus true
-                         :default-value ""
                          :error-text (when (has-whitespace @dialog-input) "No whitespace allowed")
                          :floating-label-text
                            "#hashtag, @username or leave empty"
@@ -249,7 +251,8 @@
                                          (when (= "Enter" (.-key e))
                                            (when (not (has-whitespace @dialog-input))
                                              (reset! show-column-dialog false)
-                                             (add-column @dialog-input))
+                                             (add-column @dialog-input)
+                                             (reset! dialog-input ""))
                                            (.preventDefault e)))}]]
         [:div {:style {:display "flex"
                        :flex-direction "row"
