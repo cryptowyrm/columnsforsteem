@@ -65,6 +65,20 @@
       (let [parsed (js->clj result)]
         (swap! column assoc :data parsed)))))
 
+(defn scroll-element [el duration]
+  (let [scroll-step-temp (/ (- (.-scrollTop el)) (/ duration 15))
+        scroll-step (if (< scroll-step-temp -1)
+                      scroll-step-temp
+                      -1)
+        scroll-interval (atom nil)]
+    (reset! scroll-interval (js/setInterval
+                              (fn []
+                                (if (> (.-scrollTop el) 0)
+                                  (.scrollBy el 0 scroll-step)
+                                  (do
+                                    (js/console.log "scroll finished")
+                                    (js/clearInterval @scroll-interval))))
+                              15))))
 
 (defn column-component [column remove-fn]
   (r/create-class
@@ -92,7 +106,7 @@
                          :align-items "center"}
                  :on-click (fn []
                              (when @scroll-view
-                               (set! (.-scrollTop @scroll-view) 0)))}
+                               (scroll-element @scroll-view 500)))}
            [:div {:style {:flex 1
                           :display "flex"
                           :align-items "center"
