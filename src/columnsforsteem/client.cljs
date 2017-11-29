@@ -227,6 +227,7 @@
                                      (reset! show-column-dialog false)
                                      (add-column @dialog-input))}])]}
          [ui/text-field {:full-width true
+                         :auto-focus true
                          :floating-label-text
                            "#hashtag, @username or leave empty"
                          :on-change (fn [e value]
