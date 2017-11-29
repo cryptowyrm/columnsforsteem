@@ -82,7 +82,8 @@
                             (set! (.-scrollTop @scroll-view) 0)))}
         [:div {:style {:flex 1
                        :display "flex"
-                       :align-items "center"}}
+                       :align-items "center"
+                       :overflow "hidden"}}
          (if (= "blog" (:path @column))
            [ui/drop-down-menu {:value "created"
                                :style {:background (color :blue300)
@@ -94,27 +95,29 @@
                                              :height 28
                                              :line-height "28px"}}
             [ui/menu-item {:value "created"
+                           :primary-text "New"}]]
+           [ui/drop-down-menu {:value (:path @column)
+                               :on-change (fn [e key value]
+                                            (swap! column assoc :path value)
+                                            (load-column column))
+                               :style {:background (color :blue300)
+                                       :height 28}
+                               :underline-style {:display "none"}
+                               :icon-style {:display "none"}
+                               :label-style {:padding-left 24
+                                             :padding-right 24
+                                             :height 28
+                                             :line-height "28px"}}
+            [ui/menu-item {:value "trending"
+                           :primary-text "Trending"}]
+            [ui/menu-item {:value "hot"
+                           :primary-text "Hot"}]
+            [ui/menu-item {:value "created"
                            :primary-text "New"}]])
-         [ui/drop-down-menu {:value (:path @column)
-                             :on-change (fn [e key value]
-                                          (swap! column assoc :path value)
-                                          (load-column column))
-                             :style {:background (color :blue300)
-                                     :height 28}
-                             :underline-style {:display "none"}
-                             :icon-style {:display "none"}
-                             :label-style {:padding-left 24
-                                           :padding-right 24
-                                           :height 28
-                                           :line-height "28px"}}
-          [ui/menu-item {:value "trending"
-                         :primary-text "Trending"}]
-          [ui/menu-item {:value "hot"
-                         :primary-text "Hot"}]
-          [ui/menu-item {:value "created"
-                         :primary-text "New"}]]
          (if-not (empty? (:tag @column))
-           [ui/chip {:label-style {:line-height "24px"}
+           [ui/chip {:label-style {:line-height "24px"
+                                   :overflow "hidden"
+                                   :text-overflow "ellipsis"}
                      :label-color (color :white)
                      :background-color (color :blue300)
                      :style {:margin-left 10}}
