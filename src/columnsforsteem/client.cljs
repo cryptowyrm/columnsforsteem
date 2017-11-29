@@ -76,18 +76,37 @@
                       :color "white"
                       :padding 10
                       :display "flex"
-                      :align-items "center"}}
-        [:h3 {:style {:margin 0
-                      :flex 1}
+                      :align-items "center"}
               :on-click (fn []
                           (when @scroll-view
                             (set! (.-scrollTop @scroll-view) 0)))}
-         (:path @column)]
-        (if-not (empty? (:tag @column))
-           [ui/chip {:label-style {:line-height "24px"}
-                     :label-color (color :white)
-                     :background-color (color :blue300)}
-            (str "#" (:tag @column))])
+        [:div {:style {:flex 1
+                       :display "flex"
+                       :align-items "center"}}
+         [ui/drop-down-menu {:value (:path @column)
+                             :on-change (fn [e key value]
+                                          (swap! column assoc :path value)
+                                          (load-column column))
+                             :style {:background (color :blue300)
+                                     :height 28}
+                             :underline-style {:display "none"}
+                             :icon-style {:display "none"}
+                             :label-style {:padding-left 24
+                                           :padding-right 24
+                                           :height 28
+                                           :line-height "28px"}}
+          [ui/menu-item {:value "trending"
+                         :primary-text "Trending"}]
+          [ui/menu-item {:value "hot"
+                         :primary-text "Hot"}]
+          [ui/menu-item {:value "created"
+                         :primary-text "New"}]]
+         (if-not (empty? (:tag @column))
+            [ui/chip {:label-style {:line-height "24px"}
+                      :label-color (color :white)
+                      :background-color (color :blue300)
+                      :style {:margin-left 10}}
+             (str "#" (:tag @column))])]
         [ui/icon-button {:tooltip "Close this column"
                          :tooltip-position "bottom-left"
                          :style {:padding 0
