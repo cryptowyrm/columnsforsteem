@@ -89,7 +89,9 @@
            (.scrollIntoView (r/dom-node this))
            (load-column column))))
      :reagent-render
-     (let [scroll-view (r/atom nil)]
+     (let [scroll-view (r/atom nil)
+           header (r/atom nil)
+           header-wrapper (r/atom nil)]
        (fn [column remove-fn]
          [ui/paper {:z-depth 2
                     :style {:margin 10
@@ -99,15 +101,19 @@
                             :overflow "hidden"
                             :min-width 300
                             :max-width 500}}
-          [:div {:style {:background (color :blue500)
+          [:div {:ref (fn [el] (reset! header el))
+                 :style {:background (color :blue500)
                          :color "white"
                          :padding 10
                          :display "flex"
                          :align-items "center"}
-                 :on-click (fn []
+                 :on-click (fn [e]
                              (when @scroll-view
-                               (scroll-element @scroll-view 500)))}
-           [:div {:style {:flex 1
+                               (when (or (= (.-target e) @header)
+                                         (= (.-target e) @header-wrapper))
+                                 (scroll-element @scroll-view 500))))}
+           [:div {:ref (fn [el] (reset! header-wrapper el))
+                  :style {:flex 1
                           :display "flex"
                           :align-items "center"
                           :overflow "hidden"}}
