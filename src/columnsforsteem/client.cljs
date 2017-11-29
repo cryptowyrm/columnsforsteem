@@ -71,7 +71,8 @@
     {:component-did-mount
      (fn [this]
        (let [column (first (next (r/argv this)))]
-         (if (empty? (:data @column))
+         (when (empty? (:data @column))
+           (.scrollIntoView (r/dom-node this))
            (load-column column))))
      :reagent-render
      (let [scroll-view (r/atom nil)]
@@ -268,7 +269,8 @@
                                              (add-column @dialog-input)
                                              (reset! dialog-input ""))
                                            (.preventDefault e)))}]]
-        [:div {:style {:display "flex"
+        [:div {:id "columns"
+               :style {:display "flex"
                        :flex-direction "row"
                        :overflow "hidden"
                        :overflow-x "auto"
