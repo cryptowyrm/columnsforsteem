@@ -25,8 +25,8 @@
         (first images)
         nil))))
 
-(defn avatar-url [post]
-  (str "https://steemitimages.com/u/" (get post "author") "/avatar/small"))
+(defn avatar-url [user]
+  (str "https://steemitimages.com/u/" user "/avatar/small"))
 
 (defn cached-image [url]
   (str "https://steemitimages.com/640x480/" url))
@@ -83,6 +83,18 @@
         [:div {:style {:flex 1
                        :display "flex"
                        :align-items "center"}}
+         (if (= "blog" (:path @column))
+           [ui/drop-down-menu {:value "created"
+                               :style {:background (color :blue300)
+                                       :height 28}
+                               :underline-style {:display "none"}
+                               :icon-style {:display "none"}
+                               :label-style {:padding-left 24
+                                             :padding-right 24
+                                             :height 28
+                                             :line-height "28px"}}
+            [ui/menu-item {:value "created"
+                           :primary-text "New"}]])
          [ui/drop-down-menu {:value (:path @column)
                              :on-change (fn [e key value]
                                           (swap! column assoc :path value)
@@ -102,11 +114,22 @@
           [ui/menu-item {:value "created"
                          :primary-text "New"}]]
          (if-not (empty? (:tag @column))
-            [ui/chip {:label-style {:line-height "24px"}
-                      :label-color (color :white)
-                      :background-color (color :blue300)
-                      :style {:margin-left 10}}
-             (str "#" (:tag @column))])]
+           [ui/chip {:label-style {:line-height "24px"}
+                     :label-color (color :white)
+                     :background-color (color :blue300)
+                     :style {:margin-left 10}}
+            (if (= "blog" (:path @column))
+              [ui/avatar {:src (avatar-url (:tag @column))
+                          :style {:width 24
+                                  :height 24}}]
+              [ui/avatar {:icon (r/as-element [ui/font-icon "#"])
+                          :size 24
+                          :color (color :blue500)
+                          :style {:width 24
+                                  :height 24
+                                  :line-height "24px"
+                                  :background (color :blue200)}}])
+            (:tag @column)])]
         [ui/icon-button {:tooltip "Close this column"
                          :tooltip-position "bottom-left"
                          :style {:padding 0
@@ -129,7 +152,7 @@
             ^{:key (get item "id")}
             [ui/card {:container-style {:margin-bottom 10}}
              [ui/card-header {:title (get item "author")
-                              :avatar (avatar-url item)
+                              :avatar (avatar-url (get item "author"))
                               :subtitle (format-time (get item "created"))}]
              (if-let [image (parseImageUrl item)]
                [ui/card-media
@@ -148,6 +171,21 @@
   (let [columns (r/cursor app-state [:columns])]
     (swap! columns (fn [old]
                      (filterv #(not (= % column)) old)))))
+
+(defn add-column [text]
+  (let [columns (r/cursor app-state [:columns])
+        coltype (str (first text))
+        text-rest (apply str (rest text))]
+    (swap!
+      columns
+      conj
+      (r/atom {:path (if (= coltype "@")
+                       "blog"
+                       "created")
+               :tag (cond
+                      (= coltype "@") text-rest
+                      (= coltype "#") text-rest
+                      :else text)}))))
 
 ; reagent component to be rendered
 (defn content []
@@ -184,11 +222,7 @@
                          :primary true
                          :on-click (fn []
                                      (reset! show-column-dialog false)
-                                     (swap!
-                                       columns
-                                       conj
-                                       (r/atom {:path "created"
-                                                :tag @dialog-input})))}])]}
+                                     (add-column @dialog-input))}])]}
          [ui/text-field {:full-width true
                          :floating-label-text
                            "#hashtag, @username or leave empty"
