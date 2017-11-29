@@ -231,7 +231,12 @@
                          :floating-label-text
                            "#hashtag, @username or leave empty"
                          :on-change (fn [e value]
-                                      (reset! dialog-input value))}]]
+                                      (reset! dialog-input value))
+                         :on-key-press (fn [e]
+                                         (when (= "Enter" (.-key e))
+                                           (reset! show-column-dialog false)
+                                           (add-column @dialog-input)
+                                           (.preventDefault e)))}]]
         [:div {:style {:display "flex"
                        :flex-direction "row"
                        :overflow "hidden"
