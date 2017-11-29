@@ -167,8 +167,8 @@
                 (if-let [image (parseImageUrl item)]
                   [ui/card-media
                    [:img {:src (cached-image image)}]])
-                [ui/card-text
-                 (get item "title")]
+                [ui/card-title {:title (get item "title")
+                                :title-style {:font-size 18}}]
                 [ui/card-actions
                  [:a {:target "_blank"
                       :href (str "https://www.steemit.com" (get item "url"))}
