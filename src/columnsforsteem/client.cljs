@@ -190,6 +190,9 @@
                       (= coltype "#") text-rest
                       :else text)}))))
 
+(defn has-whitespace [text]
+  (boolean (re-find #"\s" text)))
+
 ; reagent component to be rendered
 (defn content []
   (let [columns (r/cursor app-state [:columns])
@@ -224,19 +227,22 @@
                         {:label "Add column"
                          :primary true
                          :on-click (fn []
-                                     (reset! show-column-dialog false)
-                                     (add-column @dialog-input))}])]}
+                                     (when (not (has-whitespace @dialog-input))
+                                       (reset! show-column-dialog false)
+                                       (add-column @dialog-input)))}])]}
          [ui/text-field {:full-width true
                          :auto-focus true
                          :default-value ""
+                         :error-text (when (has-whitespace @dialog-input) "No whitespace allowed")
                          :floating-label-text
                            "#hashtag, @username or leave empty"
                          :on-change (fn [e value]
                                       (reset! dialog-input value))
                          :on-key-press (fn [e]
                                          (when (= "Enter" (.-key e))
-                                           (reset! show-column-dialog false)
-                                           (add-column @dialog-input)
+                                           (when (not (has-whitespace @dialog-input))
+                                             (reset! show-column-dialog false)
+                                             (add-column @dialog-input))
                                            (.preventDefault e)))}]]
         [:div {:style {:display "flex"
                        :flex-direction "row"
