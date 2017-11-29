@@ -62,113 +62,120 @@
 
 
 (defn column-component [column remove-fn]
-  (let [scroll-view (r/atom nil)]
-    (fn [column remove-fn]
-      [ui/paper {:z-depth 2
-                 :style {:margin 10
-                         :flex 1
+  (r/create-class
+    {:component-did-mount
+     (fn [this]
+       (let [column (first (next (r/argv this)))]
+         (if (empty? (:data @column))
+           (load-column column))))
+     :reagent-render
+     (let [scroll-view (r/atom nil)]
+       (fn [column remove-fn]
+         [ui/paper {:z-depth 2
+                    :style {:margin 10
+                            :flex 1
+                            :display "flex"
+                            :flex-direction "column"
+                            :overflow "hidden"
+                            :min-width 300
+                            :max-width 500}}
+          [:div {:style {:background (color :blue500)
+                         :color "white"
+                         :padding 10
                          :display "flex"
-                         :flex-direction "column"
-                         :overflow "hidden"
-                         :min-width 300
-                         :max-width 500}}
-       [:div {:style {:background (color :blue500)
-                      :color "white"
-                      :padding 10
-                      :display "flex"
-                      :align-items "center"}
-              :on-click (fn []
-                          (when @scroll-view
-                            (set! (.-scrollTop @scroll-view) 0)))}
-        [:div {:style {:flex 1
-                       :display "flex"
-                       :align-items "center"
-                       :overflow "hidden"}}
-         (if (= "blog" (:path @column))
-           [ui/drop-down-menu {:value "created"
-                               :style {:background (color :blue300)
-                                       :height 28}
-                               :underline-style {:display "none"}
-                               :icon-style {:display "none"}
-                               :label-style {:padding-left 24
-                                             :padding-right 24
-                                             :height 28
-                                             :line-height "28px"}}
-            [ui/menu-item {:value "created"
-                           :primary-text "New"}]]
-           [ui/drop-down-menu {:value (:path @column)
-                               :on-change (fn [e key value]
-                                            (swap! column assoc :path value)
-                                            (load-column column))
-                               :style {:background (color :blue300)
-                                       :height 28}
-                               :underline-style {:display "none"}
-                               :icon-style {:display "none"}
-                               :label-style {:padding-left 24
-                                             :padding-right 24
-                                             :height 28
-                                             :line-height "28px"}}
-            [ui/menu-item {:value "trending"
-                           :primary-text "Trending"}]
-            [ui/menu-item {:value "hot"
-                           :primary-text "Hot"}]
-            [ui/menu-item {:value "created"
-                           :primary-text "New"}]])
-         (if-not (empty? (:tag @column))
-           [ui/chip {:label-style {:line-height "24px"
-                                   :overflow "hidden"
-                                   :text-overflow "ellipsis"}
-                     :label-color (color :white)
-                     :background-color (color :blue300)
-                     :style {:margin-left 10}}
+                         :align-items "center"}
+                 :on-click (fn []
+                             (when @scroll-view
+                               (set! (.-scrollTop @scroll-view) 0)))}
+           [:div {:style {:flex 1
+                          :display "flex"
+                          :align-items "center"
+                          :overflow "hidden"}}
             (if (= "blog" (:path @column))
-              [ui/avatar {:src (avatar-url (:tag @column))
-                          :style {:width 24
-                                  :height 24}}]
-              [ui/avatar {:icon (r/as-element [ui/font-icon "#"])
-                          :size 24
-                          :color (color :blue500)
-                          :style {:width 24
-                                  :height 24
-                                  :line-height "24px"
-                                  :background (color :blue200)}}])
-            (:tag @column)])]
-        [ui/icon-button {:tooltip "Close this column"
-                         :tooltip-position "bottom-left"
-                         :style {:padding 0
-                                 :width "auto"
-                                 :height "auto"}
-                         :on-click remove-fn}
-         [ic/navigation-close]]]
-       [:div {:style {:overflow "hidden"
-                      :flex 1}}
-        [:div {:ref (fn [el]
-                      (reset! scroll-view el))
-               :style {:height "100%"
-                       :overflow-y "auto"
-                       :overflow-x "hidden"}}
-         [:div {:style {:padding 10}}
-          [ui/flat-button {:label "Load data"
-                           :on-click (fn []
-                                       (load-column column))}]
-          (for [item (:data @column)]
-            ^{:key (get item "id")}
-            [ui/card {:container-style {:margin-bottom 10}}
-             [ui/card-header {:title (get item "author")
-                              :avatar (avatar-url (get item "author"))
-                              :subtitle (format-time (get item "created"))}]
-             (if-let [image (parseImageUrl item)]
-               [ui/card-media
-                [:img {:src (cached-image image)}]])
-             [ui/card-text
-              (get item "title")]
-             [ui/card-actions
-              [:a {:target "_blank"
-                   :href (str "https://www.steemit.com" (get item "url"))}
-               [ui/flat-button {:label "Read on Steemit"}]]
-              [:a {:target "_blank"
-                   :href (str "https://www.busy.org" (get item "url"))}
-               [ui/flat-button {:label "Read on Busy"}]]]])]]]])))
+              [ui/drop-down-menu {:value "created"
+                                  :style {:background (color :blue300)
+                                          :height 28}
+                                  :underline-style {:display "none"}
+                                  :icon-style {:display "none"}
+                                  :label-style {:padding-left 24
+                                                :padding-right 24
+                                                :height 28
+                                                :line-height "28px"}}
+               [ui/menu-item {:value "created"
+                              :primary-text "New"}]]
+              [ui/drop-down-menu {:value (:path @column)
+                                  :on-change (fn [e key value]
+                                               (swap! column assoc :path value)
+                                               (load-column column))
+                                  :style {:background (color :blue300)
+                                          :height 28}
+                                  :underline-style {:display "none"}
+                                  :icon-style {:display "none"}
+                                  :label-style {:padding-left 24
+                                                :padding-right 24
+                                                :height 28
+                                                :line-height "28px"}}
+               [ui/menu-item {:value "trending"
+                              :primary-text "Trending"}]
+               [ui/menu-item {:value "hot"
+                              :primary-text "Hot"}]
+               [ui/menu-item {:value "created"
+                              :primary-text "New"}]])
+            (if-not (empty? (:tag @column))
+              [ui/chip {:label-style {:line-height "24px"
+                                      :overflow "hidden"
+                                      :text-overflow "ellipsis"}
+                        :label-color (color :white)
+                        :background-color (color :blue300)
+                        :style {:margin-left 10}}
+               (if (= "blog" (:path @column))
+                 [ui/avatar {:src (avatar-url (:tag @column))
+                             :style {:width 24
+                                     :height 24}}]
+                 [ui/avatar {:icon (r/as-element [ui/font-icon "#"])
+                             :size 24
+                             :color (color :blue500)
+                             :style {:width 24
+                                     :height 24
+                                     :line-height "24px"
+                                     :background (color :blue200)}}])
+               (:tag @column)])]
+           [ui/icon-button {:tooltip "Close this column"
+                            :tooltip-position "bottom-left"
+                            :style {:padding 0
+                                    :width "auto"
+                                    :height "auto"}
+                            :on-click remove-fn}
+            [ic/navigation-close]]]
+          [:div {:style {:overflow "hidden"
+                         :flex 1}}
+           [:div {:ref (fn [el]
+                         (reset! scroll-view el))
+                  :style {:height "100%"
+                          :overflow-y "auto"
+                          :overflow-x "hidden"}}
+            [:div {:style {:padding 10}}
+             [ui/flat-button {:label "Load data"
+                              :on-click (fn []
+                                          (load-column column))}]
+             (for [item (:data @column)]
+               ^{:key (get item "id")}
+               [ui/card {:container-style {:margin-bottom 10}}
+                [ui/card-header {:title (get item "author")
+                                 :avatar (avatar-url (get item "author"))
+                                 :subtitle (format-time (get item "created"))}]
+                (if-let [image (parseImageUrl item)]
+                  [ui/card-media
+                   [:img {:src (cached-image image)}]])
+                [ui/card-text
+                 (get item "title")]
+                [ui/card-actions
+                 [:a {:target "_blank"
+                      :href (str "https://www.steemit.com" (get item "url"))}
+                  [ui/flat-button {:label "Read on Steemit"}]]
+                 [:a {:target "_blank"
+                      :href (str "https://www.busy.org" (get item "url"))}
+                  [ui/flat-button {:label "Read on Busy"}]]]])]]]]))}))
 
 (defn remove-column [column]
   (let [columns (r/cursor app-state [:columns])]
@@ -257,5 +264,3 @@
 (r/render-component [content]
   (.querySelector js/document "#app"))
 
-(when (nil? (:data @(first (:columns @app-state))))
-  (println "empty"))
