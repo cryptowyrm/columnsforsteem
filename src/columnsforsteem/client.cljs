@@ -34,6 +34,11 @@
 (defn format-time [time]
   (.toLocaleString (js/Date. (str time "Z"))))
 
+(defn is-post-active [post]
+  (let [cashout (js/Date. (get post "cashout_time"))
+        now (js/Date.)]
+    (> (- cashout now) 0)))
+
 (defn getDiscussions [path tag & {:keys [callback]}]
   (.then
     (js/steem.database.getDiscussions
@@ -168,7 +173,16 @@
                   [ui/card-media
                    [:img {:src (cached-image image)}]])
                 [ui/card-title {:title (get item "title")
-                                :title-style {:font-size 18}}]
+                                :title-style {:font-size 18}
+                                :subtitle (clojure.string/join
+                                            " "
+                                            [(count (get item "active_votes"))
+                                             "votes,"
+                                             (get item "children")
+                                             "replies,"
+                                             (if (is-post-active item)
+                                               (get item "pending_payout_value")
+                                               (get item "total_payout_value"))])}]
                 [ui/card-actions
                  [:a {:target "_blank"
                       :href (str "https://www.steemit.com" (get item "url"))}
@@ -266,4 +280,3 @@
 ; tells reagent to begin rendering
 (r/render-component [content]
   (.querySelector js/document "#app"))
-
