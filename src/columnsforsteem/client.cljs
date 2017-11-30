@@ -123,6 +123,34 @@
                     (scroll-element (.querySelector column-element ".scroll-view") 500)))
                 100))))))))
 
+(defn post-card [item]
+  [ui/card {:id (str "post-" (get item "id"))
+            :container-style {:margin-bottom 10}}
+   [ui/card-header {:title (get item "author")
+                    :avatar (avatar-url (get item "author"))
+                    :subtitle (format-time (get item "created"))}]
+   (if-let [image (parseImageUrl item)]
+     [ui/card-media
+      [:img {:src (cached-image image)}]])
+   [ui/card-title {:title (get item "title")
+                   :title-style {:font-size 18}
+                   :subtitle (clojure.string/join
+                               " "
+                               [(count (get item "active_votes"))
+                                "votes,"
+                                (get item "children")
+                                "replies,"
+                                (if (is-post-active item)
+                                  (get item "pending_payout_value")
+                                  (get item "total_payout_value"))])}]
+   [ui/card-actions
+    [:a {:target "_blank"
+         :href (str "https://www.steemit.com" (get item "url"))}
+     [ui/flat-button {:label "Read on Steemit"}]]
+    [:a {:target "_blank"
+         :href (str "https://www.busy.org" (get item "url"))}
+     [ui/flat-button {:label "Read on Busy"}]]]])
+
 (defn column-component [column remove-fn]
   (r/create-class
     {:component-will-mount
@@ -233,32 +261,7 @@
             [:div {:style {:padding 10}}
              (for [item (:data @column)]
                ^{:key (get item "id")}
-               [ui/card {:id (str "post-" (get item "id"))
-                         :container-style {:margin-bottom 10}}
-                [ui/card-header {:title (get item "author")
-                                 :avatar (avatar-url (get item "author"))
-                                 :subtitle (format-time (get item "created"))}]
-                (if-let [image (parseImageUrl item)]
-                  [ui/card-media
-                   [:img {:src (cached-image image)}]])
-                [ui/card-title {:title (get item "title")
-                                :title-style {:font-size 18}
-                                :subtitle (clojure.string/join
-                                            " "
-                                            [(count (get item "active_votes"))
-                                             "votes,"
-                                             (get item "children")
-                                             "replies,"
-                                             (if (is-post-active item)
-                                               (get item "pending_payout_value")
-                                               (get item "total_payout_value"))])}]
-                [ui/card-actions
-                 [:a {:target "_blank"
-                      :href (str "https://www.steemit.com" (get item "url"))}
-                  [ui/flat-button {:label "Read on Steemit"}]]
-                 [:a {:target "_blank"
-                      :href (str "https://www.busy.org" (get item "url"))}
-                  [ui/flat-button {:label "Read on Busy"}]]]])]]]]))}))
+               [post-card item])]]]]))}))
 
 (defn remove-column [column]
   (let [columns (r/cursor app-state [:columns])]
