@@ -283,11 +283,50 @@
 (defn has-whitespace [text]
   (boolean (re-find #"\s" text)))
 
-; reagent component to be rendered
+(defn column-dialog [show-column-dialog]
+  (let [dialog-input (r/atom "")]
+    (fn [show-column-dialog]
+      [ui/dialog {:title "Add a new column"
+                  :open @show-column-dialog
+                  :on-request-close (fn []
+                                      (reset! dialog-input "")
+                                      (reset! show-column-dialog false))
+                  :actions
+                  [(r/as-element
+                     [ui/flat-button
+                      {:label "Cancel"
+                       :primary true
+                       :on-click (fn []
+                                   (reset! dialog-input "")
+                                   (reset! show-column-dialog
+                                     false))}])
+                   (r/as-element
+                     [ui/flat-button
+                      {:label "Add column"
+                       :primary true
+                       :on-click (fn []
+                                   (when (not (has-whitespace @dialog-input))
+                                     (reset! show-column-dialog false)
+                                     (add-column @dialog-input)
+                                     (reset! dialog-input "")))}])]}
+       [ui/text-field {:full-width true
+                       :auto-focus true
+                       :error-text (when (has-whitespace @dialog-input) "No whitespace allowed")
+                       :floating-label-text
+                         "#hashtag, @username or leave empty"
+                       :on-change (fn [e value]
+                                    (reset! dialog-input value))
+                       :on-key-press (fn [e]
+                                       (when (= "Enter" (.-key e))
+                                         (when (not (has-whitespace @dialog-input))
+                                           (reset! show-column-dialog false)
+                                           (add-column @dialog-input)
+                                           (reset! dialog-input ""))
+                                         (.preventDefault e)))}]])))
+
 (defn content []
   (let [columns (r/cursor app-state [:columns])
-        show-column-dialog (r/atom false)
-        dialog-input (r/atom "")]
+        show-column-dialog (r/atom false)]
     (fn []
       [ui/mui-theme-provider {:mui-theme (get-mui-theme)}
        [:div {:style {:display "flex"
@@ -300,43 +339,7 @@
                        [ui/flat-button
                         {:label "Add column"
                          :on-click #(reset! show-column-dialog true)}])}]
-        [ui/dialog {:title "Add a new column"
-                    :open @show-column-dialog
-                    :on-request-close (fn []
-                                        (reset! dialog-input "")
-                                        (reset! show-column-dialog false))
-                    :actions
-                    [(r/as-element
-                       [ui/flat-button
-                        {:label "Cancel"
-                         :primary true
-                         :on-click (fn []
-                                     (reset! dialog-input "")
-                                     (reset! show-column-dialog
-                                       false))}])
-                     (r/as-element
-                       [ui/flat-button
-                        {:label "Add column"
-                         :primary true
-                         :on-click (fn []
-                                     (when (not (has-whitespace @dialog-input))
-                                       (reset! show-column-dialog false)
-                                       (add-column @dialog-input)
-                                       (reset! dialog-input "")))}])]}
-         [ui/text-field {:full-width true
-                         :auto-focus true
-                         :error-text (when (has-whitespace @dialog-input) "No whitespace allowed")
-                         :floating-label-text
-                           "#hashtag, @username or leave empty"
-                         :on-change (fn [e value]
-                                      (reset! dialog-input value))
-                         :on-key-press (fn [e]
-                                         (when (= "Enter" (.-key e))
-                                           (when (not (has-whitespace @dialog-input))
-                                             (reset! show-column-dialog false)
-                                             (add-column @dialog-input)
-                                             (reset! dialog-input ""))
-                                           (.preventDefault e)))}]]
+        [column-dialog show-column-dialog]
         [:div {:id "columns"
                :style {:display "flex"
                        :flex-direction "row"
