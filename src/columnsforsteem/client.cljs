@@ -43,7 +43,7 @@
   (.then
     (js/steem.database.getDiscussions
       path
-      (clj->js {:limit 100
+      (clj->js {:limit 25
                 :tag tag}))
     (fn [result]
       (js/console.log result)
@@ -52,18 +52,6 @@
       (js/console.log "getDiscussions error")
       (js/console.log e)
       (if callback (callback nil)))))
-
-(defn load-column [column]
-  (getDiscussions
-    (:path @column)
-    (if-let [tag (:tag @column)]
-      tag
-      "")
-    :callback
-    (fn [result]
-      (println "Callback called")
-      (let [parsed (js->clj result)]
-        (swap! column assoc :data parsed)))))
 
 (defn scroll-element [el duration]
   (let [scroll-step-temp (/ (- (.-scrollTop el)) (/ duration 15))
@@ -80,11 +68,65 @@
                                     (js/clearInterval @scroll-interval))))
                               15))))
 
+(defn all-images [posts]
+  (filter #(not (empty? %))
+    (map (fn [post]
+           (let [metadata (js->clj (js/JSON.parse (get post "json_metadata")))
+                 image (first (get metadata "image"))]
+             (if-not (empty? image)
+               (cached-image image)
+               nil)))
+      posts)))
+
+(defonce preloaded-images (atom {}))
+
+(defn preload-images [images callback]
+  (let [left (atom (count images))]
+    (doseq [image-link images]
+      (let [image (.createElement js/document "img")]
+        (set! (.-onerror image) (fn []
+                                  (swap! left dec)
+                                  (if (= 0 @left) (callback))))
+        (set! (.-onload image) (fn []
+                                 (swap! left dec)
+                                 (if (= 0 @left) (callback))))
+        (set! (.-src image) image-link)
+        (swap! preloaded-images assoc image-link image)))))
+
+(defn load-column [column]
+  (getDiscussions
+    (:path @column)
+    (if-let [tag (:tag @column)]
+      tag
+      "")
+    :callback
+    (fn [result]
+      (println "Callback called")
+      (let [parsed (js->clj result)
+            first-parsed (first parsed)
+            last-top (if (first (:data @column))
+                       (get (first (:data @column)) "id")
+                       nil)]
+        (preload-images
+          (all-images parsed)
+          (fn []
+            (swap! column assoc :data parsed)
+            (if (and last-top
+                     (not (= last-top (get first-parsed "id"))))
+              (js/setTimeout
+                (fn []
+                  (js/console.log (:element @column))
+                  (.scrollIntoView
+                    (.querySelector (:element @column) (str "#post-" last-top)))
+                  (scroll-element (.querySelector (:element @column) ".scroll-view") 500))
+                100))))))))
+
 (defn column-component [column remove-fn]
   (r/create-class
     {:component-did-mount
      (fn [this]
        (let [column (first (next (r/argv this)))]
+         (swap! column assoc :element (r/dom-node this))
          (when (empty? (:data @column))
            (.scrollIntoView (r/dom-node this))
            (load-column column))))
@@ -175,18 +217,17 @@
             [ic/navigation-close]]]
           [:div {:style {:overflow "hidden"
                          :flex 1}}
-           [:div {:ref (fn [el]
+           [:div {:class "scroll-view"
+                  :ref (fn [el]
                          (reset! scroll-view el))
                   :style {:height "100%"
                           :overflow-y "auto"
                           :overflow-x "hidden"}}
             [:div {:style {:padding 10}}
-             [ui/flat-button {:label "Load data"
-                              :on-click (fn []
-                                          (load-column column))}]
              (for [item (:data @column)]
                ^{:key (get item "id")}
-               [ui/card {:container-style {:margin-bottom 10}}
+               [ui/card {:id (str "post-" (get item "id"))
+                         :container-style {:margin-bottom 10}}
                 [ui/card-header {:title (get item "author")
                                  :avatar (avatar-url (get item "author"))
                                  :subtitle (format-time (get item "created"))}]
@@ -302,3 +343,16 @@
 ; tells reagent to begin rendering
 (r/render-component [content]
   (.querySelector js/document "#app"))
+
+(defonce refresh-interval (atom nil))
+
+
+(when (nil? @refresh-interval)
+  (let [columns (r/cursor app-state [:columns])]
+    (reset! refresh-interval
+      (js/setInterval
+        (fn []
+          (js/console.log "Refreshing...")
+          (doseq [column @columns]
+            (load-column column)))
+        60000))))
