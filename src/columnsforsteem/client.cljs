@@ -47,11 +47,9 @@
       (clj->js {:limit 25
                 :tag tag}))
     (fn [result]
-      (js/console.log result)
       (if callback (callback result)))
     (fn [e]
-      (js/console.log "getDiscussions error")
-      (js/console.log e)
+      (js/console.log "getDiscussions error: " e)
       (if callback (callback nil)))))
 
 (defn scroll-element [el duration]
