@@ -7,7 +7,8 @@
 
 (enable-console-print!)
 
-; stores the click count
+(defonce column-index (atom 0))
+
 (defonce
   app-state
   (r/atom {:columns [(r/atom {:path "trending"})
@@ -115,18 +116,23 @@
                      (not (= last-top (get first-parsed "id"))))
               (js/setTimeout
                 (fn []
-                  (js/console.log (:element @column))
-                  (.scrollIntoView
-                    (.querySelector (:element @column) (str "#post-" last-top)))
-                  (scroll-element (.querySelector (:element @column) ".scroll-view") 500))
+                  (let [column-element (.querySelector js/document (str "#" (:element @column)))]
+                    (js/console.log column-element)
+                    (.scrollIntoView
+                      (.querySelector column-element (str "#post-" last-top)))
+                    (scroll-element (.querySelector column-element ".scroll-view") 500)))
                 100))))))))
 
 (defn column-component [column remove-fn]
   (r/create-class
-    {:component-did-mount
+    {:component-will-mount
      (fn [this]
        (let [column (first (next (r/argv this)))]
-         (swap! column assoc :element (r/dom-node this))
+         (swap! column-index inc)
+         (swap! column assoc :element (str "column-" @column-index))))
+     :component-did-mount
+     (fn [this]
+       (let [column (first (next (r/argv this)))]
          (when (empty? (:data @column))
            (.scrollIntoView (r/dom-node this))
            (load-column column))))
@@ -135,7 +141,8 @@
            header (r/atom nil)
            header-wrapper (r/atom nil)]
        (fn [column remove-fn]
-         [ui/paper {:z-depth 2
+         [ui/paper {:id (:element @column)
+                    :z-depth 2
                     :style {:margin 10
                             :flex 1
                             :display "flex"
