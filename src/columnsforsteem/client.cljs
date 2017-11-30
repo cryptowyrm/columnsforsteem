@@ -95,35 +95,40 @@
         (swap! preloaded conj image)))))
 
 (defn load-column [column]
-  (getDiscussions
-    (:path @column)
-    (if-let [tag (:tag @column)]
-      tag
-      "")
-    :callback
-    (fn [result]
-      (println "Callback called")
-      (let [parsed (js->clj result)
-            first-parsed (first parsed)
-            last-top (if (first (:data @column))
-                       (get (first (:data @column)) "id")
-                       nil)]
-        (preload-images
-          (all-images parsed)
-          (fn [preloaded]
-            (swap! column assoc :images preloaded)
-            (swap! column assoc :data parsed)
-            (if (and (or (= "created" (:path @column))
-                         (= "blog" (:path @column)))
-                     last-top
-                     (not (= last-top (get first-parsed "id"))))
-              (js/setTimeout
-                (fn []
-                  (let [column-element (.querySelector js/document (str "#" (:element @column)))]
-                    (.scrollIntoView
-                      (.querySelector column-element (str "#post-" last-top)))
-                    (scroll-element (.querySelector column-element ".scroll-view") 500)))
-                100))))))))
+  (when (= 0 (.-scrollTop (.querySelector
+                            (.querySelector js/document (str "#" (:element @column)))
+                            ".scroll-view")))
+    (getDiscussions
+      (:path @column)
+      (if-let [tag (:tag @column)]
+        tag
+        "")
+      :callback
+      (fn [result]
+        (println "Callback called")
+        (let [parsed (js->clj result)
+              first-parsed (first parsed)
+              last-top (if (first (:data @column))
+                         (get (first (:data @column)) "id")
+                         nil)]
+          (preload-images
+            (all-images parsed)
+            (fn [preloaded]
+              (let [column-element (.querySelector js/document (str "#" (:element @column)))
+                    scroll-view (.querySelector column-element ".scroll-view")]
+                (when (= 0 (.-scrollTop scroll-view))
+                  (swap! column assoc :images preloaded)
+                  (swap! column assoc :data parsed)
+                  (if (and (or (= "created" (:path @column))
+                               (= "blog" (:path @column)))
+                           last-top
+                           (not (= last-top (get first-parsed "id"))))
+                    (js/setTimeout
+                      (fn []
+                        (.scrollIntoView
+                          (.querySelector column-element (str "#post-" last-top)))
+                        (scroll-element scroll-view 500))
+                      100)))))))))))
 
 (defn post-card [item]
   [ui/card {:id (str "post-" (get item "id"))
