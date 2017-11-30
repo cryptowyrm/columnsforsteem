@@ -60,6 +60,7 @@
                       scroll-step-temp
                       -1)
         scroll-interval (atom nil)]
+    (js/console.log "Scrolling started: " el)
     (reset! scroll-interval (js/setInterval
                               (fn []
                                 (if (> (.-scrollTop el) 0)
@@ -112,12 +113,13 @@
           (fn [preloaded]
             (swap! column assoc :images preloaded)
             (swap! column assoc :data parsed)
-            (if (and last-top
+            (if (and (or (= "created" (:path @column))
+                         (= "blog" (:path @column)))
+                     last-top
                      (not (= last-top (get first-parsed "id"))))
               (js/setTimeout
                 (fn []
                   (let [column-element (.querySelector js/document (str "#" (:element @column)))]
-                    (js/console.log column-element)
                     (.scrollIntoView
                       (.querySelector column-element (str "#post-" last-top)))
                     (scroll-element (.querySelector column-element ".scroll-view") 500)))
