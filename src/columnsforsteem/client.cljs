@@ -79,20 +79,19 @@
                nil)))
       posts)))
 
-(defonce preloaded-images (atom {}))
-
 (defn preload-images [images callback]
-  (let [left (atom (count images))]
+  (let [left (atom (count images))
+        preloaded (atom [])]
     (doseq [image-link images]
       (let [image (.createElement js/document "img")]
         (set! (.-onerror image) (fn []
                                   (swap! left dec)
-                                  (if (= 0 @left) (callback))))
+                                  (if (= 0 @left) (callback preloaded))))
         (set! (.-onload image) (fn []
                                  (swap! left dec)
-                                 (if (= 0 @left) (callback))))
+                                 (if (= 0 @left) (callback preloaded))))
         (set! (.-src image) image-link)
-        (swap! preloaded-images assoc image-link image)))))
+        (swap! preloaded conj image)))))
 
 (defn load-column [column]
   (getDiscussions
@@ -110,7 +109,8 @@
                        nil)]
         (preload-images
           (all-images parsed)
-          (fn []
+          (fn [preloaded]
+            (swap! column assoc :images preloaded)
             (swap! column assoc :data parsed)
             (if (and last-top
                      (not (= last-top (get first-parsed "id"))))
