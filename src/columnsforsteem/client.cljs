@@ -137,9 +137,9 @@
            (.scrollIntoView (r/dom-node this))
            (load-column column))))
      :reagent-render
-     (let [scroll-view (r/atom nil)
-           header (r/atom nil)
-           header-wrapper (r/atom nil)]
+     (let [scroll-view (atom nil)
+           header (atom nil)
+           header-wrapper (atom nil)]
        (fn [column remove-fn]
          [ui/paper {:id (:element @column)
                     :z-depth 2
