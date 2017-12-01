@@ -92,10 +92,11 @@
         (set! (.-src image) image-link)
         (swap! preloaded conj image)))))
 
-(defn load-column [column]
-  (when (= 0 (.-scrollTop (.querySelector
-                            (.querySelector js/document (str "#" (:element @column)))
-                            ".scroll-view")))
+(defn load-column [column & {:keys [forced]}]
+  (when (or forced
+            (= 0 (.-scrollTop (.querySelector
+                                (.querySelector js/document (str "#" (:element @column)))
+                                ".scroll-view"))))
     (getDiscussions
       (:path @column)
       (if-let [tag (:tag @column)]
@@ -114,7 +115,8 @@
             (fn [preloaded]
               (let [column-element (.querySelector js/document (str "#" (:element @column)))
                     scroll-view (.querySelector column-element ".scroll-view")]
-                (when (= 0 (.-scrollTop scroll-view))
+                (when (or forced
+                          (= 0 (.-scrollTop scroll-view)))
                   (swap! column assoc :images preloaded)
                   (swap! column assoc :data parsed)
                   (if (and (or (= "created" (:path @column))
@@ -213,8 +215,9 @@
                               :primary-text "New"}]]
               [ui/drop-down-menu {:value (:path @column)
                                   :on-change (fn [e key value]
+                                               (swap! column assoc :data [])
                                                (swap! column assoc :path value)
-                                               (load-column column))
+                                               (load-column column :forced true))
                                   :style {:background (color :blue300)
                                           :height 28}
                                   :underline-style {:display "none"}
