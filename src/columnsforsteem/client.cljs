@@ -267,7 +267,7 @@
                              :style {:width 24
                                      :height 24
                                      :line-height "24px"
-                                     :background (color :blue200)}}])
+                                     :background-color (color :blue200)}}])
                (:tag @column)])]
            [ui/icon-button {:tooltip "Close this column"
                             :tooltip-position "bottom-left"
