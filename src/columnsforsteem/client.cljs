@@ -267,6 +267,15 @@
                           :overflow-y "auto"
                           :overflow-x "hidden"}}
             [:div {:style {:padding 10}}
+             [:div {:style {:position "relative"
+                            :width 40
+                            :margin-left "auto"
+                            :margin-right "auto"}}
+              [ui/refresh-indicator {:top 0
+                                     :left 0
+                                     :status (if (empty? (:data @column))
+                                               "loading"
+                                               "hide")}]]
              (for [item (:data @column)]
                ^{:key (get item "id")}
                [post-card item])]]]]))}))
