@@ -11,7 +11,8 @@
 
 (defonce
   app-state
-  (r/atom {:columns [(r/atom {:path "trending"})
+  (r/atom {:drawer-open false
+           :columns [(r/atom {:path "trending"})
                      (r/atom {:path "hot"})]}))
 
 (defn parseImageUrl [post]
@@ -350,25 +351,38 @@
     (fn []
       [ui/mui-theme-provider {:mui-theme (get-mui-theme)}
        [:div {:style {:display "flex"
-                      :flex-direction "column"
                       :flex 1
                       :overflow "hidden"}}
-        [ui/app-bar {:title "Columns for Steem"
-                     :icon-element-right
-                     (r/as-element
-                       [ui/flat-button
-                        {:label "Add column"
-                         :on-click #(reset! show-column-dialog true)}])}]
-        [column-dialog show-column-dialog]
-        [:div {:id "columns"
+        [ui/drawer {:open (:drawer-open @app-state)
+                    :z-depth 1
+                    :container-style {}}
+         [ui/menu-item "one"]
+         [ui/menu-item "two"]]
+        [:div {:id "content-wrapper"
                :style {:display "flex"
-                       :flex-direction "row"
-                       :overflow "hidden"
-                       :overflow-x "auto"
-                       :flex 1}}
-         (for [[index column] (map-indexed vector @columns)]
-           ^{:key index}
-           [column-component column #(remove-column column)])]]])))
+                       :flex-direction "column"
+                       :flex 1
+                       :margin-left (when (:drawer-open @app-state) 256)
+                       :overflow "hidden"}}
+         [ui/app-bar {:title "Columns for Steem"
+                      :on-left-icon-button-touch-tap
+                      (fn []
+                        (swap! app-state assoc :drawer-open (not (:drawer-open @app-state))))
+                      :icon-element-right
+                      (r/as-element
+                        [ui/flat-button
+                         {:label "Add column"
+                          :on-click #(reset! show-column-dialog true)}])}]
+         [column-dialog show-column-dialog]
+         [:div {:id "columns"
+                :style {:display "flex"
+                        :flex-direction "row"
+                        :overflow "hidden"
+                        :overflow-x "auto"
+                        :flex 1}}
+          (for [[index column] (map-indexed vector @columns)]
+            ^{:key index}
+            [column-component column #(remove-column column)])]]]])))
 
 ; tells reagent to begin rendering
 (r/render-component [content]
