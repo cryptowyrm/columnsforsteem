@@ -12,7 +12,8 @@
 (defonce
   app-state
   (r/atom {:drawer-open false
-           :settings {:hide-nsfw true}
+           :settings {:hide-nsfw true
+                      :dark-mode false}
            :columns [(r/atom {:path "trending"})
                      (r/atom {:path "hot"})]}))
 
@@ -136,6 +137,7 @@
   (let [settings (r/cursor app-state [:settings])
         metadata (js->clj (js/JSON.parse (get item "json_metadata")))]
     (fn [item]
+      (:dark-mode @settings) ; hack to make posts rerender when toggling theme
       [ui/card {:id (str "post-" (get item "id"))
                 :container-style {:margin-bottom 10}}
        [ui/card-header {:title (get item "author")
@@ -179,7 +181,8 @@
            (.scrollIntoView (r/dom-node this))
            (load-column column))))
      :reagent-render
-     (let [scroll-view (atom nil)
+     (let [settings (r/cursor app-state [:settings])
+           scroll-view (atom nil)
            header (atom nil)
            header-wrapper (atom nil)]
        (fn [column remove-fn]
@@ -193,7 +196,9 @@
                             :min-width 300
                             :max-width 500}}
           [:div {:ref (fn [el] (reset! header el))
-                 :style {:background (color :blue500)
+                 :style {:background (if (:dark-mode @settings)
+                                       (color :grey800)
+                                       (color :blue500))
                          :color "white"
                          :padding 10
                          :display "flex"
@@ -210,7 +215,9 @@
                           :overflow "hidden"}}
             (if (= "blog" (:path @column))
               [ui/drop-down-menu {:value "created"
-                                  :style {:background (color :blue300)
+                                  :style {:background (if (:dark-mode @settings)
+                                                        (color :grey900)
+                                                        (color :blue300))
                                           :height 28}
                                   :underline-style {:display "none"}
                                   :icon-style {:display "none"}
@@ -225,7 +232,9 @@
                                                (swap! column assoc :data [])
                                                (swap! column assoc :path value)
                                                (load-column column :forced true))
-                                  :style {:background (color :blue300)
+                                  :style {:background (if (:dark-mode @settings)
+                                                        (color :grey900)
+                                                        (color :blue300))
                                           :height 28}
                                   :underline-style {:display "none"}
                                   :icon-style {:display "none"}
@@ -244,7 +253,9 @@
                                       :overflow "hidden"
                                       :text-overflow "ellipsis"}
                         :label-color (color :white)
-                        :background-color (color :blue300)
+                        :background-color (if (:dark-mode @settings)
+                                            (color :grey700)
+                                            (color :blue300))
                         :style {:margin-left 10}}
                (if (= "blog" (:path @column))
                  [ui/avatar {:src (avatar-url (:tag @column))
@@ -365,6 +376,13 @@
                             {:toggled (:hide-nsfw @settings)
                              :on-toggle (fn [e toggled]
                                           (swap! settings assoc :hide-nsfw toggled))}])}]
+        [ui/list-item {:primary-text "Dark theme"
+                       :right-toggle
+                         (r/as-element
+                           [ui/toggle
+                            {:toggled (:dark-mode @settings)
+                             :on-toggle (fn [e toggled]
+                                          (swap! settings assoc :dark-mode toggled))}])}]
         [ui/subheader "Info"]
         [:a {:target "_blank"
              :href "https://www.steemit.com"
@@ -391,7 +409,19 @@
         settings (r/cursor app-state [:settings])
         show-column-dialog (r/atom false)]
     (fn []
-      [ui/mui-theme-provider {:mui-theme (get-mui-theme)}
+      [ui/mui-theme-provider
+       (if (:dark-mode @settings)
+         {:mui-theme (get-mui-theme
+                       (assoc (js->clj
+                                (aget js/MaterialUIStyles "DarkRawTheme")
+                                :keywordize-keys true)
+                         :palette
+                         (merge
+                           (:palette (js->clj
+                                       (aget js/MaterialUIStyles "DarkRawTheme")
+                                       :keywordize-keys true))
+                           {})))}
+         {:mui-theme (get-mui-theme)})
        [:div {:style {:display "flex"
                       :flex 1
                       :overflow "hidden"}}
@@ -402,22 +432,37 @@
                        :flex 1
                        :margin-left (when (:drawer-open @app-state) 256)
                        :overflow "hidden"}}
-         [ui/app-bar {:title "Columns for Steem"
-                      :on-left-icon-button-touch-tap
-                      (fn []
-                        (swap! app-state assoc :drawer-open (not (:drawer-open @app-state))))
-                      :icon-element-right
-                      (r/as-element
-                        [ui/flat-button
-                         {:label "Add column"
-                          :on-click #(reset! show-column-dialog true)}])}]
+         [ui/mui-theme-provider
+          (if (:dark-mode @settings)
+            {:mui-theme (get-mui-theme
+                          (assoc (js->clj
+                                   (aget js/MaterialUIStyles "DarkRawTheme")
+                                   :keywordize-keys true)
+                            :palette
+                            (merge
+                              (:palette (js->clj
+                                          (aget js/MaterialUIStyles "DarkRawTheme")
+                                          :keywordize-keys true))
+                              {:primary1Color "#303030"
+                               :alternateTextColor (color :white)})))}
+            {:mui-theme (get-mui-theme)})
+          [ui/app-bar {:title "Columns for Steem"
+                       :on-left-icon-button-touch-tap
+                       (fn []
+                         (swap! app-state assoc :drawer-open (not (:drawer-open @app-state))))
+                       :icon-element-right
+                       (r/as-element
+                         [ui/flat-button
+                          {:label "Add column"
+                           :on-click #(reset! show-column-dialog true)}])}]]
          [column-dialog show-column-dialog]
-         [:div {:id "columns"
-                :style {:display "flex"
-                        :flex-direction "row"
-                        :overflow "hidden"
-                        :overflow-x "auto"
-                        :flex 1}}
+         [ui/paper {:id "columns"
+                    :rounded false
+                    :style {:display "flex"
+                            :flex-direction "row"
+                            :overflow "hidden"
+                            :overflow-x "auto"
+                            :flex 1}}
           (for [[index column] (map-indexed vector @columns)]
             ^{:key index}
             [column-component column #(remove-column column)])]]]])))
