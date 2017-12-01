@@ -12,6 +12,7 @@
 (defonce
   app-state
   (r/atom {:drawer-open false
+           :settings {:hide-nsfw true}
            :columns [(r/atom {:path "trending"})
                      (r/atom {:path "hot"})]}))
 
@@ -132,32 +133,37 @@
                       100)))))))))))
 
 (defn post-card [item]
-  [ui/card {:id (str "post-" (get item "id"))
-            :container-style {:margin-bottom 10}}
-   [ui/card-header {:title (get item "author")
-                    :avatar (avatar-url (get item "author"))
-                    :subtitle (format-time (get item "created"))}]
-   (if-let [image (parseImageUrl item)]
-     [ui/card-media
-      [:img {:src (cached-image image)}]])
-   [ui/card-title {:title (get item "title")
-                   :title-style {:font-size 18}
-                   :subtitle (clojure.string/join
-                               " "
-                               [(count (get item "active_votes"))
-                                "votes,"
-                                (get item "children")
-                                "replies,"
-                                (if (is-post-active item)
-                                  (get item "pending_payout_value")
-                                  (get item "total_payout_value"))])}]
-   [ui/card-actions
-    [:a {:target "_blank"
-         :href (str "https://www.steemit.com" (get item "url"))}
-     [ui/flat-button {:label "Read on Steemit"}]]
-    [:a {:target "_blank"
-         :href (str "https://www.busy.org" (get item "url"))}
-     [ui/flat-button {:label "Read on Busy"}]]]])
+  (let [settings (r/cursor app-state [:settings])
+        metadata (js->clj (js/JSON.parse (get item "json_metadata")))]
+    (fn [item]
+      [ui/card {:id (str "post-" (get item "id"))
+                :container-style {:margin-bottom 10}}
+       [ui/card-header {:title (get item "author")
+                        :avatar (avatar-url (get item "author"))
+                        :subtitle (format-time (get item "created"))}]
+       (if-let [image (parseImageUrl item)]
+         (when-not (and (:hide-nsfw @settings)
+                        (> (count (filter #(= % "nsfw") (get metadata "tags"))) 0))
+           [ui/card-media
+            [:img {:src (cached-image image)}]]))
+       [ui/card-title {:title (get item "title")
+                       :title-style {:font-size 18}
+                       :subtitle (clojure.string/join
+                                   " "
+                                   [(count (get item "active_votes"))
+                                    "votes,"
+                                    (get item "children")
+                                    "replies,"
+                                    (if (is-post-active item)
+                                      (get item "pending_payout_value")
+                                      (get item "total_payout_value"))])}]
+       [ui/card-actions
+        [:a {:target "_blank"
+             :href (str "https://www.steemit.com" (get item "url"))}
+         [ui/flat-button {:label "Read on Steemit"}]]
+        [:a {:target "_blank"
+             :href (str "https://www.busy.org" (get item "url"))}
+         [ui/flat-button {:label "Read on Busy"}]]]])))
 
 (defn column-component [column remove-fn]
   (r/create-class
@@ -347,6 +353,7 @@
 
 (defn content []
   (let [columns (r/cursor app-state [:columns])
+        settings (r/cursor app-state [:settings])
         show-column-dialog (r/atom false)]
     (fn []
       [ui/mui-theme-provider {:mui-theme (get-mui-theme)}
@@ -356,8 +363,15 @@
         [ui/drawer {:open (:drawer-open @app-state)
                     :z-depth 1
                     :container-style {}}
-         [ui/menu-item "one"]
-         [ui/menu-item "two"]]
+         [ui/list
+          [ui/subheader "Settings"]
+          [ui/list-item {:primary-text "Hide NSFW images"
+                         :right-toggle
+                           (r/as-element
+                             [ui/toggle
+                              {:toggled (:hide-nsfw @settings)
+                               :on-toggle (fn [e toggled]
+                                            (swap! settings assoc :hide-nsfw toggled))}])}]]]
         [:div {:id "content-wrapper"
                :style {:display "flex"
                        :flex-direction "column"
