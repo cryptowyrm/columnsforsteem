@@ -19,14 +19,14 @@
 
 (defn load-settings []
   (let [settings (r/cursor app-state [:settings])
-        loaded (js/JSON.parse (.getItem js/localStorage "settings"))]
+        loaded (js/JSON.parse (.getItem js/localStorage "settingscfs"))]
     (if (nil? loaded)
       nil
       (reset! settings (js->clj loaded :keywordize-keys true)))))
 
 (defn save-settings []
   (let [settings (r/cursor app-state [:settings])]
-    (.setItem js/localStorage "settings" (js/JSON.stringify (clj->js @settings)))))
+    (.setItem js/localStorage "settingscfs" (js/JSON.stringify (clj->js @settings)))))
 
 (defn load-columns []
   (let [columns (r/cursor app-state [:columns])
