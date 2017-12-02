@@ -182,13 +182,11 @@
                                     (if (is-post-active item)
                                       (get item "pending_payout_value")
                                       (get item "total_payout_value"))])}]
-       [ui/card-actions
+       [ui/card-actions {:style {:display "flex"
+                                 :justify-content "center"}}
         [:a {:target "_blank"
              :href (str "https://www.steemit.com" (get item "url"))}
-         [ui/flat-button {:label "Read on Steemit"}]]
-        [:a {:target "_blank"
-             :href (str "https://www.busy.org" (get item "url"))}
-         [ui/flat-button {:label "Read on Busy"}]]]])))
+         [ui/flat-button {:label "Read on Steemit"}]]]])))
 
 (defn column-component [column remove-fn]
   (r/create-class
