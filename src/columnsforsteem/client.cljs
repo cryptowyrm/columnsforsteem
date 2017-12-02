@@ -5,8 +5,6 @@
             [cljs-react-material-ui.icons :as ic]
             [reagent.core :as r]))
 
-(enable-console-print!)
-
 (defonce column-index (atom 0))
 
 (defonce
@@ -92,13 +90,11 @@
                       scroll-step-temp
                       -1)
         scroll-interval (atom nil)]
-    (js/console.log "Scrolling started: " el)
     (reset! scroll-interval (js/setInterval
                               (fn []
                                 (if (> (.-scrollTop el) 0)
                                   (.scrollBy el 0 scroll-step)
                                   (do
-                                    (js/console.log "scroll finished")
                                     (js/clearInterval @scroll-interval))))
                               15))))
 
@@ -149,7 +145,7 @@
         :callback
         (fn [result]
           (when (= loaded-path (:path @column))
-            (js/console.log "load-column result: " result)
+            #_(js/console.log "load-column result: " result)
             (let [parsed (js->clj result)
                   first-parsed (first parsed)
                   last-top (if (first (:data @column))
@@ -184,7 +180,7 @@
                                 (scroll-element scroll-view 500))
                               100)))))))
                 (when-not (= last-top (get first-parsed "id"))
-                  (js/console.log "Second load...")
+                  #_(js/console.log "Second load...")
                   (load-column column :second true))))))))))
 
 (defn post-card [item]
