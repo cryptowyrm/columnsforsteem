@@ -17,6 +17,17 @@
            :columns [(r/atom {:path "trending"})
                      (r/atom {:path "hot"})]}))
 
+(defn load-settings []
+  (let [settings (r/cursor app-state [:settings])
+        loaded (js/JSON.parse (.getItem js/localStorage "settings"))]
+    (if (nil? loaded)
+      nil
+      (reset! settings (js->clj loaded :keywordize-keys true)))))
+
+(defn save-settings []
+  (let [settings (r/cursor app-state [:settings])]
+    (.setItem js/localStorage "settings" (js/JSON.stringify (clj->js @settings)))))
+
 (defn parseImageUrl [post]
   (if (empty? (get post "json_metadata"))
     nil
@@ -406,14 +417,16 @@
                            [ui/toggle
                             {:toggled (:hide-nsfw @settings)
                              :on-toggle (fn [e toggled]
-                                          (swap! settings assoc :hide-nsfw toggled))}])}]
+                                          (swap! settings assoc :hide-nsfw toggled)
+                                          (save-settings))}])}]
         [ui/list-item {:primary-text "Dark theme"
                        :right-toggle
                          (r/as-element
                            [ui/toggle
                             {:toggled (:dark-mode @settings)
                              :on-toggle (fn [e toggled]
-                                          (swap! settings assoc :dark-mode toggled))}])}]
+                                          (swap! settings assoc :dark-mode toggled)
+                                          (save-settings))}])}]
         [ui/subheader "Info"]
         [:a {:target "_blank"
              :href "https://www.steemit.com"
@@ -497,6 +510,8 @@
           (for [[index column] (map-indexed vector @columns)]
             ^{:key index}
             [column-component column #(remove-column column)])]]]])))
+
+(load-settings)
 
 ; tells reagent to begin rendering
 (r/render-component [content]
