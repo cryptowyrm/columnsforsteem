@@ -14,8 +14,10 @@
   (r/atom {:drawer-open false
            :settings {:hide-nsfw true
                       :dark-mode true}
-           :columns [(r/atom {:path "trending"})
-                     (r/atom {:path "hot"})]}))
+           :columns [(r/atom {:path "created" :tag "technology"})
+                     (r/atom {:path "created" :tag "news"})
+                     (r/atom {:path "hot"})
+                     (r/atom {:path "blog" :tag "crypticwyrm"})]}))
 
 (defn load-settings []
   (let [settings (r/cursor app-state [:settings])
