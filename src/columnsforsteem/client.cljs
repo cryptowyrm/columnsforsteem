@@ -100,6 +100,7 @@
             (= 0 (.-scrollTop (.querySelector
                                 (.querySelector js/document (str "#" (:element @column)))
                                 ".scroll-view"))))
+    (swap! column assoc :last-loaded (js/Date.))
     (let [loaded-path (:path @column)]
       (getDiscussions
         (:path @column)
@@ -505,13 +506,13 @@
 
 (defonce refresh-interval (atom nil))
 
-
 (when (nil? @refresh-interval)
   (let [columns (r/cursor app-state [:columns])]
     (reset! refresh-interval
       (js/setInterval
         (fn []
-          (js/console.log "Refreshing...")
           (doseq [column @columns]
-            (load-column column)))
-        60000))))
+            (let [now (js/Date.)]
+              (if (> (- now (:last-loaded @column)) 60000)
+                (load-column column)))))
+        10000))))
