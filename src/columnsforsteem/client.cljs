@@ -13,7 +13,7 @@
   app-state
   (r/atom {:drawer-open false
            :settings {:hide-nsfw true
-                      :dark-mode false}
+                      :dark-mode true}
            :columns [(r/atom {:path "trending"})
                      (r/atom {:path "hot"})]}))
 
