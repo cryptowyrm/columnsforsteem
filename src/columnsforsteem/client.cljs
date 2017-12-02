@@ -110,7 +110,8 @@
                 second
                 (empty? (:data @column))
                 (not (or (= "created" (:path @column))
-                         (= "blog" (:path @column)))))
+                         (= "blog" (:path @column))
+                         (= "feed" (:path @column)))))
           25
           1)
         :callback
@@ -126,7 +127,8 @@
                       second
                       (empty? (:data @column))
                       (not (or (= "created" (:path @column))
-                               (= "blog" (:path @column)))))
+                               (= "blog" (:path @column))
+                               (= "feed" (:path @column)))))
                 (preload-images
                   (all-images parsed)
                   (fn [preloaded]
@@ -139,7 +141,8 @@
                           (swap! column assoc :images preloaded)
                           (swap! column assoc :data parsed)
                           (if (and (or (= "created" (:path @column))
-                                       (= "blog" (:path @column)))
+                                       (= "blog" (:path @column))
+                                       (= "feed" (:path @column)))
                                    last-top
                                    (not (= last-top (get first-parsed "id"))))
                             (js/setTimeout
@@ -232,8 +235,14 @@
                           :display "flex"
                           :align-items "center"
                           :overflow "hidden"}}
-            (if (= "blog" (:path @column))
-              [ui/drop-down-menu {:value "created"
+            (if (or (= "blog" (:path @column))
+                    (= "feed" (:path @column)))
+              [ui/drop-down-menu {:value (:path @column)
+                                  :on-change (fn [e key value]
+                                               (when-not (= value (:path @column))
+                                                 (swap! column assoc :data [])
+                                                 (swap! column assoc :path value)
+                                                 (load-column column :forced true)))
                                   :style {:background (if (:dark-mode @settings)
                                                         (color :grey900)
                                                         (color :blue300))
@@ -244,8 +253,10 @@
                                                 :padding-right 24
                                                 :height 28
                                                 :line-height "28px"}}
-               [ui/menu-item {:value "created"
-                              :primary-text "New"}]]
+               [ui/menu-item {:value "blog"
+                              :primary-text "Blog"}]
+               [ui/menu-item {:value "feed"
+                              :primary-text "Feed"}]]
               [ui/drop-down-menu {:value (:path @column)
                                   :on-change (fn [e key value]
                                                (when-not (= value (:path @column))
@@ -277,7 +288,8 @@
                                             (color :grey700)
                                             (color :blue300))
                         :style {:margin-left 10}}
-               (if (= "blog" (:path @column))
+               (if (or (= "blog" (:path @column))
+                       (= "feed" (:path @column)))
                  [ui/avatar {:src (avatar-url (:tag @column))
                              :style {:width 24
                                      :height 24}}]
