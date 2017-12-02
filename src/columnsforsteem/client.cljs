@@ -28,6 +28,24 @@
   (let [settings (r/cursor app-state [:settings])]
     (.setItem js/localStorage "settings" (js/JSON.stringify (clj->js @settings)))))
 
+(defn load-columns []
+  (let [columns (r/cursor app-state [:columns])
+        loaded (js/JSON.parse (.getItem js/localStorage "columns"))]
+    (if (nil? loaded)
+      nil
+      (reset! columns (mapv
+                        (fn [col]
+                          (r/atom col))
+                        (js->clj loaded :keywordize-keys true))))))
+
+(defn save-columns []
+  (let [columns (r/cursor app-state [:columns])
+        condensed (mapv
+                    (fn [column] {:path (:path @column)
+                                  :tag (:tag @column)})
+                    @columns)]
+    (.setItem js/localStorage "columns" (js/JSON.stringify (clj->js condensed)))))
+
 (defn parseImageUrl [post]
   (if (empty? (get post "json_metadata"))
     nil
@@ -252,7 +270,8 @@
                                                (when-not (= value (:path @column))
                                                  (swap! column assoc :data [])
                                                  (swap! column assoc :path value)
-                                                 (load-column column :forced true)))
+                                                 (load-column column :forced true)
+                                                 (save-columns)))
                                   :style {:background (if (:dark-mode @settings)
                                                         (color :grey900)
                                                         (color :blue300))
@@ -272,7 +291,8 @@
                                                (when-not (= value (:path @column))
                                                  (swap! column assoc :data [])
                                                  (swap! column assoc :path value)
-                                                 (load-column column :forced true)))
+                                                 (load-column column :forced true)
+                                                 (save-columns)))
                                   :style {:background (if (:dark-mode @settings)
                                                         (color :grey900)
                                                         (color :blue300))
@@ -343,7 +363,8 @@
 (defn remove-column [column]
   (let [columns (r/cursor app-state [:columns])]
     (swap! columns (fn [old]
-                     (filterv #(not (= % column)) old)))))
+                     (filterv #(not (= % column)) old)))
+    (save-columns)))
 
 (defn add-column [text]
   (let [columns (r/cursor app-state [:columns])
@@ -358,7 +379,8 @@
                :tag (cond
                       (= coltype "@") text-rest
                       (= coltype "#") text-rest
-                      :else text)}))))
+                      :else text)}))
+    (save-columns)))
 
 (defn has-whitespace [text]
   (boolean (re-find #"\s" text)))
@@ -511,7 +533,12 @@
             ^{:key index}
             [column-component column #(remove-column column)])]]]])))
 
-(load-settings)
+(defonce initial-startup (atom false))
+
+(when-not @initial-startup
+  (load-settings)
+  (load-columns)
+  (reset! initial-startup true))
 
 ; tells reagent to begin rendering
 (r/render-component [content]
