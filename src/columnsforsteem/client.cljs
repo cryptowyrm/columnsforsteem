@@ -72,12 +72,17 @@
         now (js/Date.)]
     (> (- cashout now) 0)))
 
-(defn getDiscussions [path tag limit & {:keys [callback]}]
+(defn getDiscussions [path tag limit & {:keys [callback paging]}]
   (.then
     (js/steem.database.getDiscussions
       path
-      (clj->js {:limit limit
-                :tag tag}))
+      (if (nil? paging)
+        (clj->js {:limit limit
+                  :tag tag})
+        (clj->js {:limit limit
+                  :tag tag
+                  :start_author (:start-author paging)
+                  :start_permlink (:start-permlink paging)})))
     (fn [result]
       (if callback (callback result)))
     (fn [e]
@@ -173,8 +178,8 @@
                             scroll-view (.querySelector column-element ".scroll-view")]
                         (when (or forced
                                   (= 0 (.-scrollTop scroll-view)))
-                          (swap! column assoc :images preloaded
-                            :data parsed)
+                          (swap! column assoc :images @preloaded
+                                              :data parsed)
                           (if (and (or (= "created" (:path @column))
                                        (= "blog" (:path @column))
                                        (= "feed" (:path @column)))
@@ -191,6 +196,37 @@
                     (load-column column :second true
                       :path loaded-path))
                   (swap! column assoc :loading false))))))))))
+
+(defn load-column-bottom [column]
+  (if (and (> (count (:data @column)) 0)
+           (not (:loading @column))
+           (not (:loading-bottom @column))
+           (or (nil? (:more @column))
+               (:more @column)))
+    (do
+      (js/console.log "Loading bottom...")
+      (swap! column assoc :loading-bottom true)
+      (let [loaded-path (:path @column)]
+        (getDiscussions
+          (:path @column)
+          (if-let [tag (:tag @column)]
+            tag
+            "")
+          25
+          :paging {:start-author (get (last (:data @column)) "author")
+                   :start-permlink (get (last (:data @column)) "permlink")}
+          :callback
+            (fn [result]
+              (when (= loaded-path (:path @column))
+                (let [parsed (js->clj result)]
+                  (preload-images
+                    (all-images parsed)
+                    (fn [preloaded]
+                      (when (= loaded-path (:path @column))
+                        (swap! column update-in [:images] into @preloaded)
+                        (swap! column update-in [:data] into (rest parsed))
+                        (swap! column assoc :loading-bottom false
+                          :more (= (count parsed) 25)))))))))))))
 
 (defn post-card [item]
   (let [settings (r/cursor app-state [:settings])
@@ -275,8 +311,9 @@
               [ui/drop-down-menu {:value (:path @column)
                                   :on-change (fn [e key value]
                                                (when-not (= value (:path @column))
-                                                 (swap! column assoc :data [])
-                                                 (swap! column assoc :path value)
+                                                 (swap! column assoc :data []
+                                                                     :path value
+                                                                     :more nil)
                                                  (load-column column :forced true)
                                                  (save-columns)))
                                   :style {:background (if (:dark-mode @settings)
@@ -296,8 +333,9 @@
               [ui/drop-down-menu {:value (:path @column)
                                   :on-change (fn [e key value]
                                                (when-not (= value (:path @column))
-                                                 (swap! column assoc :data [])
-                                                 (swap! column assoc :path value)
+                                                 (swap! column assoc :data []
+                                                                     :path value
+                                                                     :more nil)
                                                  (load-column column :forced true)
                                                  (save-columns)))
                                   :style {:background (if (:dark-mode @settings)
@@ -346,11 +384,21 @@
                             :on-click remove-fn}
             [ic/navigation-close]]]
           [:div {:style {:overflow "hidden"
-                         :flex 1}}
+                         :flex 1
+                         :display "flex"
+                         :flex-direction "column"}}
            [:div {:class "scroll-view"
                   :ref (fn [el]
                          (reset! scroll-view el))
-                  :style {:height "100%"
+                  :on-scroll (fn []
+                               (when
+                                 (>
+                                    (+ (.-scrollTop @scroll-view)
+                                       (.-clientHeight @scroll-view)
+                                       50)
+                                    (.-scrollHeight @scroll-view))
+                                 (load-column-bottom column)))
+                  :style {:flex 1
                           :overflow-y "auto"
                           :overflow-x "hidden"}}
             [:div {:style {:padding 10}}
@@ -366,7 +414,17 @@
                                                "hide")}]]
              (for [item (:data @column)]
                ^{:key (get item "id")}
-               [post-card item])]]]]))}))
+               [post-card item])
+             [:div {:style {:position "relative"
+                            :width 40
+                            :margin-left "auto"
+                            :margin-right "auto"}}
+              [ui/refresh-indicator {:top 0
+                                     :left 0
+                                     :status (if (or (:loading-bottom @column)
+                                                     (:more @column))
+                                               "loading"
+                                               "hide")}]]]]]]))}))
 
 (defn remove-column [column]
   (let [columns (r/cursor app-state [:columns])]
