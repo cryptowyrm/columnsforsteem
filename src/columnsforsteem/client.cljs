@@ -111,24 +111,31 @@
 (defn preload-images [images callback]
   (let [left (atom (count images))
         preloaded (atom [])]
-    (doseq [image-link images]
-      (let [image (.createElement js/document "img")]
-        (set! (.-onerror image) (fn []
-                                  (swap! left dec)
-                                  (if (= 0 @left) (callback preloaded))))
-        (set! (.-onload image) (fn []
-                                 (swap! left dec)
-                                 (if (= 0 @left) (callback preloaded))))
-        (set! (.-src image) image-link)
-        (swap! preloaded conj image)))))
+    (if (empty? images)
+      (callback preloaded)
+      (doseq [image-link images]
+        (let [image (.createElement js/document "img")]
+          (set! (.-onerror image) (fn []
+                                    (swap! left dec)
+                                    (if (<= @left 0) (callback preloaded))))
+          (set! (.-onload image) (fn []
+                                   (swap! left dec)
+                                   (if (<= @left 0) (callback preloaded))))
+          (set! (.-src image) image-link)
+          (swap! preloaded conj image))))))
 
-(defn load-column [column & {:keys [forced second]}]
+(defn load-column [column & {:keys [forced second path]}]
   (when (or forced
-            (= 0 (.-scrollTop (.querySelector
-                                (.querySelector js/document (str "#" (:element @column)))
-                                ".scroll-view"))))
-    (swap! column assoc :last-loaded (js/Date.))
-    (let [loaded-path (:path @column)]
+            second
+            (and (not (:loading @column))
+                 (= 0 (.-scrollTop (.querySelector
+                                     (.querySelector js/document (str "#" (:element @column)))
+                                     ".scroll-view")))))
+    (swap! column assoc :last-loaded (js/Date.)
+      :loading true)
+    (let [loaded-path (if (nil? path)
+                        (:path @column)
+                        path)]
       (getDiscussions
         (:path @column)
         (if-let [tag (:tag @column)]
@@ -145,7 +152,6 @@
         :callback
         (fn [result]
           (when (= loaded-path (:path @column))
-            #_(js/console.log "load-column result: " result)
             (let [parsed (js->clj result)
                   first-parsed (first parsed)
                   last-top (if (first (:data @column))
@@ -161,13 +167,14 @@
                   (all-images parsed)
                   (fn [preloaded]
                     (when (= loaded-path (:path @column))
+                      (swap! column assoc :loading false)
                       (let [column-element (.querySelector
                                              js/document (str "#" (:element @column)))
                             scroll-view (.querySelector column-element ".scroll-view")]
                         (when (or forced
                                   (= 0 (.-scrollTop scroll-view)))
-                          (swap! column assoc :images preloaded)
-                          (swap! column assoc :data parsed)
+                          (swap! column assoc :images preloaded
+                            :data parsed)
                           (if (and (or (= "created" (:path @column))
                                        (= "blog" (:path @column))
                                        (= "feed" (:path @column)))
@@ -179,9 +186,11 @@
                                   (.querySelector column-element (str "#post-" last-top)))
                                 (scroll-element scroll-view 500))
                               100)))))))
-                (when-not (= last-top (get first-parsed "id"))
-                  #_(js/console.log "Second load...")
-                  (load-column column :second true))))))))))
+                (if-not (= last-top (get first-parsed "id"))
+                  (do
+                    (load-column column :second true
+                      :path loaded-path))
+                  (swap! column assoc :loading false))))))))))
 
 (defn post-card [item]
   (let [settings (r/cursor app-state [:settings])
@@ -351,7 +360,8 @@
                             :margin-right "auto"}}
               [ui/refresh-indicator {:top 0
                                      :left 0
-                                     :status (if (empty? (:data @column))
+                                     :status (if (and (:loading @column)
+                                                      (empty? (:data @column)))
                                                "loading"
                                                "hide")}]]
              (for [item (:data @column)]
