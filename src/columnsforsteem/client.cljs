@@ -214,7 +214,6 @@
            (or (nil? (:more @column))
                (:more @column)))
     (do
-      (js/console.log "Loading bottom...")
       (swap! column assoc :loading-bottom true)
       (let [loaded-path (:path @column)]
         (getDiscussions
@@ -226,17 +225,17 @@
           :paging {:start-author (get (last (:data @column)) "author")
                    :start-permlink (get (last (:data @column)) "permlink")}
           :callback
-            (fn [result]
-              (when (= loaded-path (:path @column))
-                (let [parsed (js->clj result)]
-                  (preload-images
-                    (all-images parsed)
-                    (fn [preloaded]
-                      (when (= loaded-path (:path @column))
-                        (swap! column update-in [:images] into @preloaded)
-                        (swap! column update-in [:data] into (rest parsed))
-                        (swap! column assoc :loading-bottom false
-                          :more (= (count parsed) 25)))))))))))))
+          (fn [result]
+            (when (= loaded-path (:path @column))
+              (let [parsed (js->clj result)]
+                (preload-images
+                  (all-images parsed)
+                  (fn [preloaded]
+                    (when (= loaded-path (:path @column))
+                      (swap! column update-in [:images] into @preloaded)
+                      (swap! column update-in [:data] into (rest parsed))
+                      (swap! column assoc :loading-bottom false
+                        :more (= (count parsed) 25)))))))))))))
 
 (defn post-card [item]
   (let [settings (r/cursor app-state [:settings])
