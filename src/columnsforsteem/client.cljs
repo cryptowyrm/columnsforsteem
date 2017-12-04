@@ -78,9 +78,11 @@
       path
       (if (nil? paging)
         (clj->js {:limit limit
-                  :tag tag})
+                  :tag tag
+                  :truncate_body 2})
         (clj->js {:limit limit
                   :tag tag
+                  :truncate_body 2
                   :start_author (:start-author paging)
                   :start_permlink (:start-permlink paging)})))
     (fn [result]
