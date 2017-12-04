@@ -46,9 +46,15 @@
                     @columns)]
     (.setItem js/localStorage "columns" (js/JSON.stringify (clj->js condensed)))))
 
+(def image-regex
+  #"(?i)https?://((?!http)[^\s])*?\.(jpe?g|png|gif)(\?[A-Za-z0-9!$&'()*+.,;=]*\b)?")
+  
 (defn parseImageUrl [post]
   (if (empty? (get post "json_metadata"))
-    nil
+    (first
+      (re-find
+        image-regex
+        (get post "body")))
     (let [parsed (js/JSON.parse (get post "json_metadata"))
           meta (js->clj parsed)
           images (get meta "image")]
@@ -56,7 +62,10 @@
                   (empty? images)
                   (empty? (first images)))
         (first images)
-        nil))))
+        (first
+          (re-find
+            image-regex
+            (get post "body")))))))
 
 (defn avatar-url [user]
   (str "https://steemitimages.com/u/" user "/avatar/small"))
@@ -79,10 +88,10 @@
       (if (nil? paging)
         (clj->js {:limit limit
                   :tag tag
-                  :truncate_body 2})
+                  :truncate_body 5000})
         (clj->js {:limit limit
                   :tag tag
-                  :truncate_body 2
+                  :truncate_body 5000
                   :start_author (:start-author paging)
                   :start_permlink (:start-permlink paging)})))
     (fn [result]
@@ -108,11 +117,9 @@
 (defn all-images [posts]
   (filter #(not (empty? %))
     (map (fn [post]
-           (let [metadata (js->clj (js/JSON.parse (get post "json_metadata")))
-                 image (first (get metadata "image"))]
-             (if-not (empty? image)
-               (cached-image image)
-               nil)))
+           (if-let [image (parseImageUrl post)]
+             (cached-image image)
+             nil))
       posts)))
 
 (defn preload-images [images callback]
@@ -135,6 +142,7 @@
   (when (or forced
             second
             (and (not (:loading @column))
+                 (not (:loading-bottom @column))
                  (= 0 (.-scrollTop (.querySelector
                                      (.querySelector js/document (str "#" (:element @column)))
                                      ".scroll-view")))))
@@ -181,7 +189,7 @@
                         (when (or forced
                                   (= 0 (.-scrollTop scroll-view)))
                           (swap! column assoc :images @preloaded
-                                              :data parsed)
+                            :data parsed)
                           (if (and (or (= "created" (:path @column))
                                        (= "blog" (:path @column))
                                        (= "feed" (:path @column)))
