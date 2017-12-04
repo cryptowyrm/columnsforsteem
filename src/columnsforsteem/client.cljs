@@ -50,22 +50,25 @@
   #"(?i)https?://((?!http)[^\s])*?\.(jpe?g|png|gif)(\?[A-Za-z0-9!$&'()*+.,;=]*\b)?")
   
 (defn parseImageUrl [post]
-  (if (empty? (get post "json_metadata"))
-    (first
-      (re-find
-        image-regex
-        (get post "body")))
-    (let [parsed (js/JSON.parse (get post "json_metadata"))
-          meta (js->clj parsed)
-          images (get meta "image")]
-      (if-not (or (nil? images)
-                  (empty? images)
-                  (empty? (first images)))
-        (first images)
-        (first
-          (re-find
-            image-regex
-            (get post "body")))))))
+  (if-let [result
+           (if (empty? (get post "json_metadata"))
+             (first
+               (re-find
+                 image-regex
+                 (get post "body")))
+             (let [parsed (js/JSON.parse (get post "json_metadata"))
+                   meta (js->clj parsed)
+                   images (get meta "image")]
+               (if-not (or (nil? images)
+                           (empty? images)
+                           (empty? (first images)))
+                 (first images)
+                 (first
+                   (re-find
+                     image-regex
+                     (get post "body"))))))]
+    (clojure.string/replace result "&amp;" "&")
+    nil))
 
 (defn avatar-url [user]
   (str "https://steemitimages.com/u/" user "/avatar/small"))
