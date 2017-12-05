@@ -240,6 +240,28 @@
                       (swap! column assoc :loading-bottom false
                         :more (= (count parsed) 25)))))))))))))
 
+(defn remove-column [column]
+  (let [columns (r/cursor app-state [:columns])]
+    (swap! columns (fn [old]
+                     (filterv #(not (= % column)) old)))
+    (save-columns)))
+
+(defn add-column [text]
+  (let [columns (r/cursor app-state [:columns])
+        coltype (str (first text))
+        text-rest (apply str (rest text))]
+    (swap!
+      columns
+      conj
+      (r/atom {:path (if (= coltype "@")
+                       "blog"
+                       "created")
+               :tag (cond
+                      (= coltype "@") text-rest
+                      (= coltype "#") text-rest
+                      :else text)}))
+    (save-columns)))
+
 (defn post-card [item]
   (let [settings (r/cursor app-state [:settings])
         metadata (js->clj (js/JSON.parse (get item "json_metadata")))]
@@ -248,7 +270,12 @@
       [ui/card {:id (str "post-" (get item "id"))
                 :container-style {:margin-bottom 10}}
        [ui/card-header {:title (get item "author")
-                        :avatar (avatar-url (get item "author"))
+                        :avatar (r/as-element
+                                  [ui/avatar
+                                   {:src (avatar-url (get item "author"))
+                                    :title "Show user in new column"
+                                    :class "hover-cursor"
+                                    :on-click #(add-column (str "@" (get item "author")))}])
                         :subtitle (format-time (get item "created"))}]
        (if-let [image (parseImageUrl item)]
          (when-not (and (:hide-nsfw @settings)
@@ -437,28 +464,6 @@
                                                      (:more @column))
                                                "loading"
                                                "hide")}]]]]]]))}))
-
-(defn remove-column [column]
-  (let [columns (r/cursor app-state [:columns])]
-    (swap! columns (fn [old]
-                     (filterv #(not (= % column)) old)))
-    (save-columns)))
-
-(defn add-column [text]
-  (let [columns (r/cursor app-state [:columns])
-        coltype (str (first text))
-        text-rest (apply str (rest text))]
-    (swap!
-      columns
-      conj
-      (r/atom {:path (if (= coltype "@")
-                       "blog"
-                       "created")
-               :tag (cond
-                      (= coltype "@") text-rest
-                      (= coltype "#") text-rest
-                      :else text)}))
-    (save-columns)))
 
 (defn has-whitespace [text]
   (boolean (re-find #"\s" text)))
