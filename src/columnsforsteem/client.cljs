@@ -12,10 +12,10 @@
   (r/atom {:drawer-open false
            :settings {:hide-nsfw true
                       :dark-mode true}
-           :columns [(r/atom {:path "created" :tag "technology"})
-                     (r/atom {:path "created" :tag "news"})
-                     (r/atom {:path "hot"})
-                     (r/atom {:path "blog" :tag "crypticwyrm"})]}))
+           :columns [{:id (random-uuid) :path "created" :tag "technology"}
+                     {:id (random-uuid) :path "created" :tag "news"}
+                     {:id (random-uuid) :path "hot"}
+                     {:id (random-uuid) :path "blog" :tag "crypticwyrm"}]}))
 
 (defn load-settings []
   (let [settings (r/cursor app-state [:settings])
@@ -33,16 +33,14 @@
         loaded (js/JSON.parse (.getItem js/localStorage "columns"))]
     (if (nil? loaded)
       nil
-      (reset! columns (mapv
-                        (fn [col]
-                          (r/atom col))
-                        (js->clj loaded :keywordize-keys true))))))
+      (reset! columns
+        (mapv #(assoc % :id (random-uuid)) (js->clj loaded :keywordize-keys true))))))
 
 (defn save-columns []
   (let [columns (r/cursor app-state [:columns])
         condensed (mapv
-                    (fn [column] {:path (:path @column)
-                                  :tag (:tag @column)})
+                    (fn [column] {:path (:path column)
+                                  :tag (:tag column)})
                     @columns)]
     (.setItem js/localStorage "columns" (js/JSON.stringify (clj->js condensed)))))
 
@@ -243,7 +241,7 @@
 (defn remove-column [column]
   (let [columns (r/cursor app-state [:columns])]
     (swap! columns (fn [old]
-                     (filterv #(not (= % column)) old)))
+                     (filterv #(not (= (:id %) (:id @column))) old)))
     (save-columns)))
 
 (defn add-column [text]
@@ -253,13 +251,14 @@
     (swap!
       columns
       conj
-      (r/atom {:path (if (= coltype "@")
-                       "blog"
-                       "created")
-               :tag (cond
-                      (= coltype "@") text-rest
-                      (= coltype "#") text-rest
-                      :else text)}))
+      {:id (random-uuid)
+       :path (if (= coltype "@")
+               "blog"
+               "created")
+       :tag (cond
+              (= coltype "@") text-rest
+              (= coltype "#") text-rest
+              :else text)})
     (save-columns)))
 
 (defn card-subtitle [item]
@@ -630,9 +629,11 @@
                             :overflow "hidden"
                             :overflow-x "auto"
                             :flex 1}}
-          (for [[index column] (map-indexed vector @columns)]
-            ^{:key index}
-            [column-component column #(remove-column column)])]]]])))
+          (map-indexed (fn [idx {id :id}]
+                         (let [column (r/cursor app-state [:columns idx])]
+                           ^{:key id}
+                           [column-component column #(remove-column column)]))
+                       @columns)]]]])))
 
 (defonce initial-startup (atom false))
 (defonce refresh-interval (atom nil))
@@ -651,8 +652,9 @@
       (reset! refresh-interval
         (js/setInterval
           (fn []
-            (doseq [column @columns]
-              (let [now (js/Date.)]
+            (doseq [idx (range (count @columns))]
+              (let [column (r/cursor app-state [:columns idx])
+                    now (js/Date.)]
                 (if (> (- now (:last-loaded @column)) 60000)
                   (load-column column)))))
           10000)))))
