@@ -262,6 +262,31 @@
                       :else text)}))
     (save-columns)))
 
+(defn card-subtitle [item]
+  (let [icon-size 20
+        settings (r/cursor app-state [:settings])
+        dark-mode (:dark-mode @settings)
+        icon-color (if dark-mode (color :grey300) (color :grey600))]
+    [:div {:style {:display "flex"
+                   :justify-content "space-between"
+                   :align-items "center"
+                   :padding 5}}
+     [ic/hardware-keyboard-arrow-up {:color icon-color
+                                     :style {:width icon-size
+                                             :height icon-size}}]
+     [:div (count (get item "active_votes"))]
+     [ic/communication-chat-bubble {:color icon-color
+                                    :style {:width icon-size
+                                            :height icon-size}}]
+     [:div (get item "children")]
+     [ic/editor-attach-money {:color icon-color
+                              :style {:width icon-size
+                                      :height icon-size}}]
+     [:div
+      (if (is-post-active item)
+        (get item "pending_payout_value")
+        (get item "total_payout_value"))]]))
+
 (defn post-card [item]
   (let [settings (r/cursor app-state [:settings])
         metadata (js->clj (js/JSON.parse (get item "json_metadata")))]
@@ -285,15 +310,7 @@
        [ui/card-title {:title (get item "title")
                        :title-style {:font-size 18
                                      :line-height "24px"}
-                       :subtitle (clojure.string/join
-                                   " "
-                                   [(count (get item "active_votes"))
-                                    "votes,"
-                                    (get item "children")
-                                    "replies,"
-                                    (if (is-post-active item)
-                                      (get item "pending_payout_value")
-                                      (get item "total_payout_value"))])}]
+                       :subtitle (r/as-element [card-subtitle item])}]
        [ui/card-actions {:style {:display "flex"
                                  :justify-content "center"}}
         [:a {:target "_blank"
