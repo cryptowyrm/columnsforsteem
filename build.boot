@@ -3,6 +3,7 @@
   :dependencies '[[adzerk/boot-cljs "2.1.4" :scope "test"]
                   [adzerk/boot-reload "0.5.2" :scope "test"]
                   [org.clojure/test.check "0.9.0" :scope "test"]
+                  [crisptrutski/boot-cljs-test "0.3.5-SNAPSHOT" :scope "test"]
                   [nightlight "2.0.4" :scope "test"]
                   ; project deps
                   [org.clojure/clojure "1.9.0-beta4"]
@@ -37,7 +38,25 @@
   '[nightlight.core :as nightlight]
   '[adzerk.boot-cljs :refer [cljs]]
   '[adzerk.boot-reload :refer [reload]]
+  '[crisptrutski.boot-cljs-test :refer [test-cljs]]
   'columnsforsteem.server)
+
+(deftask testing []
+  (merge-env! :source-paths #{"test"})
+  identity)
+
+(deftask test-once []
+  (set-env! :resource-paths #{"resources" "test-resources"})
+  (comp
+    (testing)
+    (test-cljs :js-env :phantom)))
+
+(deftask auto-test []
+  (set-env! :resource-paths #{"resources" "test-resources"})
+  (comp
+    (testing)
+    (watch)
+    (test-cljs :js-env :phantom)))
 
 (deftask run []
   (set-env! :resource-paths #{"resources" "dev-resources"})
@@ -73,4 +92,3 @@
   (comp
     (cljs :optimizations :advanced)
     (target)))
-

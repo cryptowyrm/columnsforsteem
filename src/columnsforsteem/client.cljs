@@ -48,7 +48,7 @@
 
 (def image-regex
   #"(?i)https?://((?!http)[^\s])*?\.(jpe?g|png|gif)(\?[A-Za-z0-9!$&'()*+.,;=]*\b)?")
-  
+
 (defn parseImageUrl [post]
   (if-let [result
            (if (empty? (get post "json_metadata"))
@@ -617,25 +617,24 @@
             [column-component column #(remove-column column)])]]]])))
 
 (defonce initial-startup (atom false))
-
-(when-not @initial-startup
-  (load-settings)
-  (load-columns)
-  (reset! initial-startup true))
-
-; tells reagent to begin rendering
-(r/render-component [content]
-  (.querySelector js/document "#app"))
-
 (defonce refresh-interval (atom nil))
 
-(when (nil? @refresh-interval)
-  (let [columns (r/cursor app-state [:columns])]
-    (reset! refresh-interval
-      (js/setInterval
-        (fn []
-          (doseq [column @columns]
-            (let [now (js/Date.)]
-              (if (> (- now (:last-loaded @column)) 60000)
-                (load-column column)))))
-        10000))))
+(defn init []
+  (when-not @initial-startup
+    (load-settings)
+    (load-columns)
+    (reset! initial-startup true))
+
+  (r/render-component [content]
+    (.getElementById js/document "app"))
+
+  (when (nil? @refresh-interval)
+    (let [columns (r/cursor app-state [:columns])]
+      (reset! refresh-interval
+        (js/setInterval
+          (fn []
+            (doseq [column @columns]
+              (let [now (js/Date.)]
+                (if (> (- now (:last-loaded @column)) 60000)
+                  (load-column column)))))
+          10000)))))

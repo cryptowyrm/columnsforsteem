@@ -1,1 +1,1 @@
-{:require [columnsforsteem.client], :init-fns [], :compiler-options {:infer-externs true}}
+{:require [columnsforsteem.client], :init-fns [columnsforsteem.client/init], :compiler-options {:infer-externs true}}
