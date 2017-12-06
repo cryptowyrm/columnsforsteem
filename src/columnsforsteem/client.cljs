@@ -283,7 +283,8 @@
            [ui/card-media
             [:img {:src (cached-image image)}]]))
        [ui/card-title {:title (get item "title")
-                       :title-style {:font-size 18}
+                       :title-style {:font-size 18
+                                     :line-height "24px"}
                        :subtitle (clojure.string/join
                                    " "
                                    [(count (get item "active_votes"))
