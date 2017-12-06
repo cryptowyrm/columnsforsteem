@@ -16,3 +16,11 @@
 
       nil
       "nothing")))
+
+(deftest test-is-post-active []
+  (is (= false (app/is-post-active {"cashout_time" "2017-10-16T18:46:06"})))
+  (is (= true (app/is-post-active {"cashout_time" "2117-10-16T18:46:06"}))))
+
+(deftest test-has-whitespace
+  (is (= true (app/has-whitespace "has whitespace")))
+  (is (= false (app/has-whitespace "nowhitespace"))))
