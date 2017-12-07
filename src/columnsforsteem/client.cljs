@@ -151,7 +151,8 @@
       :loading true)
     (let [loaded-path (if (nil? path)
                         (:path @column)
-                        path)]
+                        path)
+          outdated (> (- (js/Date.) (:last-loaded-full @column)) 300000)]
       (getDiscussions
         (:path @column)
         (if-let [tag (:tag @column)]
@@ -160,6 +161,7 @@
         (if (or forced
                 second
                 (empty? (:data @column))
+                outdated
                 (not (or (= "created" (:path @column))
                          (= "blog" (:path @column))
                          (= "feed" (:path @column)))))
@@ -176,6 +178,7 @@
               (if (or forced
                       second
                       (empty? (:data @column))
+                      outdated
                       (not (or (= "created" (:path @column))
                                (= "blog" (:path @column))
                                (= "feed" (:path @column)))))
@@ -183,7 +186,8 @@
                   (all-images parsed)
                   (fn [preloaded]
                     (when (= loaded-path (:path @column))
-                      (swap! column assoc :loading false)
+                      (swap! column assoc :loading false
+                                          :last-loaded-full (js/Date.))
                       (let [column-element (.querySelector
                                              js/document (str "#" (:element @column)))
                             scroll-view (.querySelector column-element ".scroll-view")]
