@@ -138,6 +138,14 @@
           (set! (.-src image) image-link)
           (swap! preloaded conj image))))))
 
+; number of posts to load for different column sort orders
+(def column-load-num
+  {"created" 50
+   "blog" 25
+   "feed" 25
+   "trending" 25
+   "hot" 25})
+
 (defn load-column [column & {:keys [forced second path]}]
   (when (or forced
             second
@@ -164,7 +172,7 @@
                 (not (or (= "created" (:path @column))
                          (= "blog" (:path @column))
                          (= "feed" (:path @column)))))
-          25
+          (column-load-num (:path @column))
           1)
         :callback
         (fn [result]
