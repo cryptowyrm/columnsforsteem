@@ -45,7 +45,7 @@
     (.setItem js/localStorage "columns" (js/JSON.stringify (clj->js condensed)))))
 
 (def image-regex
-  #"(?i)https?://[^\s<>]*?\.(jpe?g|png|gif)(\?[A-Za-z0-9!$&'()*+.,;=]*\b)?")
+  #"(?i)https?://[^\s<>]*\.(jpe?g|png|gif)(\?[A-Za-z0-9!$&'()*+.,;=]*\b)?")
 
 (def ipfs-regex
   #"(?i)<img src=['\"](https?://((?!http)[^\s])*?(?:(?:\.(?:jpe?g|gif|png)|ipfs/[a-z\d]{40,})))['\"]")

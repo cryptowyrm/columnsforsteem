@@ -27,7 +27,11 @@
   (are [expected actual] (= expected (app/parse-image-url actual))
     "https://ipfs.io/ipfs/QmYDnTNYMa6KWJHDiwekFrGkDgRd257nLACAHTPwejiUTh"
     {"body"
-     "<img src='https://ipfs.io/ipfs/QmYDnTNYMa6KWJHDiwekFrGkDgRd257nLACAHTPwejiUTh'>"}))
+     "<img src='https://ipfs.io/ipfs/QmYDnTNYMa6KWJHDiwekFrGkDgRd257nLACAHTPwejiUTh'>"}
+
+    "https://axios-img.rbl.ms/simage/https%3A%2F%2Fassets.rbl.ms%2F16627222%2F980x.jpg/2000%2C2000/8bw1H2%2F28LxIdkcO/img.jpg"
+    {"body"
+     "<center>https://axios-img.rbl.ms/simage/https%3A%2F%2Fassets.rbl.ms%2F16627222%2F980x.jpg/2000%2C2000/8bw1H2%2F28LxIdkcO/img.jpg<br></center>"}))
 
 (deftest test-is-post-active []
   (is (= false (app/is-post-active {"cashout_time" "2017-10-16T18:46:06"})))
