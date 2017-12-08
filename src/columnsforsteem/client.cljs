@@ -209,8 +209,16 @@
                                    (not (= last-top (get first-parsed "id"))))
                             (js/setTimeout
                               (fn []
-                                (.scrollIntoView
-                                  (.querySelector column-element (str "#post-" last-top)))
+                                (if-let [scroll-to (.querySelector column-element (str "#post-" last-top))]
+                                  (.scrollIntoView scroll-to)
+                                  (set!
+                                    (.-scrollTop scroll-view)
+                                    ; scroll to 200 pixels above bottom, so
+                                    ; that column isn't bottom loaded
+                                    (-
+                                      (.-scrollHeight scroll-view)
+                                      (.-clientHeight scroll-view)
+                                      200)))
                                 (scroll-element scroll-view 500))
                               100)))))))
                 (if-not (= last-top (get first-parsed "id"))
@@ -220,6 +228,7 @@
                   (swap! column assoc :loading false))))))))))
 
 (defn load-column-bottom [column]
+  ;(js/console.log "Load bottom...")
   (if (and (> (count (:data @column)) 0)
            (not (:loading @column))
            (not (:loading-bottom @column))
