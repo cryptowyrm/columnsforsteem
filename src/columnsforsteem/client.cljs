@@ -108,10 +108,10 @@
         scroll-interval (atom nil)]
     (reset! scroll-interval (js/setInterval
                               (fn []
-                                (if (> (.-scrollTop el) 0)
+                                (if (and (.contains js/document el)
+                                         (> (.-scrollTop el) 0))
                                   (.scrollBy el 0 scroll-step)
-                                  (do
-                                    (js/clearInterval @scroll-interval))))
+                                  (js/clearInterval @scroll-interval)))
                               15))))
 
 (defn all-images [posts]
