@@ -339,8 +339,9 @@
            header-wrapper (atom nil)]
        (fn [column remove-fn]
          [ui/paper {:id (:element @column)
+                    :class "column"
                     :z-depth 2
-                    :style {:margin 10
+                    :style {:margin-left 10
                             :flex 1
                             :display "flex"
                             :flex-direction "column"
@@ -631,7 +632,9 @@
                             :flex-direction "row"
                             :overflow "hidden"
                             :overflow-x "auto"
-                            :flex 1}}
+                            :flex 1
+                            :padding-bottom 10
+                            :padding-top 10}}
           (map-indexed (fn [idx {id :id}]
                          (let [column (r/cursor app-state [:columns idx])]
                            ^{:key id}
