@@ -45,28 +45,27 @@
     (.setItem js/localStorage "columns" (js/JSON.stringify (clj->js condensed)))))
 
 (def image-regex
-  #"(?i)https?://((?!http)[^\s])*?\.(jpe?g|png|gif)(\?[A-Za-z0-9!$&'()*+.,;=]*\b)?")
+  #"(?i)https?://[^\s<>]*?\.(jpe?g|png|gif)(\?[A-Za-z0-9!$&'()*+.,;=]*\b)?")
 
-(defn parseImageUrl [post]
-  (if-let [result
-           (if (empty? (get post "json_metadata"))
-             (first
-               (re-find
-                 image-regex
-                 (get post "body")))
-             (let [parsed (js/JSON.parse (get post "json_metadata"))
-                   meta (js->clj parsed)
-                   images (get meta "image")]
-               (if-not (or (nil? images)
-                           (empty? images)
-                           (empty? (first images)))
-                 (first images)
-                 (first
-                   (re-find
-                     image-regex
-                     (get post "body"))))))]
-    (clojure.string/replace result "&amp;" "&")
-    nil))
+(def ipfs-regex
+  #"(?i)<img src=['\"](https?://((?!http)[^\s])*?(?:(?:\.(?:jpe?g|gif|png)|ipfs/[a-z\d]{40,})))['\"]")
+
+(defn parse-image-url [post]
+  (let [metadata (get post "json_metadata")
+        body (get post "body")
+        result (or
+                 ; try parsing json_metadata for image key
+                 (when (not (empty? metadata))
+                   (let [parsed (js/JSON.parse (get post "json_metadata"))
+                         meta (js->clj parsed)
+                         images (get meta "image")]
+                     (first images)))
+                 ; try image regex
+                 (first (re-find image-regex body))
+                 ; try ipfs regex
+                 (nth (re-find ipfs-regex body) 1))]
+    (when result
+      (clojure.string/replace result "&amp;" "&"))))
 
 (defn avatar-url [user]
   (str "https://steemitimages.com/u/" user "/avatar/small"))
@@ -118,7 +117,7 @@
 (defn all-images [posts]
   (filter #(not (empty? %))
     (map (fn [post]
-           (if-let [image (parseImageUrl post)]
+           (if-let [image (parse-image-url post)]
              (cached-image image)
              nil))
       posts)))
@@ -305,7 +304,7 @@
                                     :class "hover-cursor"
                                     :on-click #(add-column (str "@" (get item "author")))}])
                         :subtitle (format-time (get item "created"))}]
-       (if-let [image (parseImageUrl item)]
+       (if-let [image (parse-image-url item)]
          (when-not (and (:hide-nsfw @settings)
                         (> (count (filter #(= % "nsfw") (get metadata "tags"))) 0))
            [ui/card-media
