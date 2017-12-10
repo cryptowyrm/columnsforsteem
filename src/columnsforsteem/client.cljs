@@ -420,7 +420,10 @@
             :ref #(when %
                     (swap! state assoc :height (.-clientHeight %)))}
            (first children)]]
-         [:div {:style (merge {:text-align "center"
+         [:div {:title (if (:expanded @props)
+                         "Click to hide"
+                         "Click to show")
+                :style (merge {:text-align "center"
                                :background "#ddd"}
                          (:style-bottom @props))
                 :on-click (fn [] (swap! props update :expanded not))}
@@ -554,7 +557,7 @@
                          :flex-direction "column"}}
            (if (or (= "blog" (:path @column))
                    (= "feed" (:path @column)))
-             [expander {:expanded false
+             [expander {:expanded true
                         :style {:color "black"}
                         :style-bottom (if (:dark-mode @settings)
                                         {:background (color :grey800)
@@ -562,33 +565,34 @@
                                          :border-top "1px solid"
                                          :border-color (color :grey900)
                                          :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"})}
-              [:div {:style {:display "flex"
-                             :flex-wrap "wrap"
-                             :justify-content "center"
-                             :align-items "center"}}
-               (let [metadata (get (:account @column) "json_metadata")
-                     parsed (js->clj (if-not (empty? metadata)
-                                      (js/JSON.parse metadata)
-                                      nil))
-                     bio (-> parsed
-                           (get "profile")
-                           (get "about"))]
-                (when bio
-                 [ui/paper {:z-depth 1
-                            :style {:margin 5
-                                    :padding 5
-                                    :text-align "center"}}
-                  bio]))
-               [ui/chip {:style {:margin 2}}
-                (get-in @column [:account "balance"])]
-               [ui/chip {:style {:margin 2}}
-                (get-in @column [:account "sbd_balance"])]
-               [ui/chip {:style {:margin 2}}
-                (str (get-in @column [:account "post_count"]) " posts")]
-               [ui/chip {:style {:margin 2}}
-                (str (get-in @column [:account "follower_count"]) " follower")]
-               [ui/chip {:style {:margin 2}}
-                (str (get-in @column [:account "following_count"]) " following")]]])
+              (when (:account @column)
+                [:div {:style {:display "flex"
+                               :flex-wrap "wrap"
+                               :justify-content "center"
+                               :align-items "center"}}
+                 (let [metadata (get (:account @column) "json_metadata")
+                       parsed (js->clj (if-not (empty? metadata)
+                                        (js/JSON.parse metadata)
+                                        nil))
+                       bio (-> parsed
+                             (get "profile")
+                             (get "about"))]
+                  (when bio
+                   [ui/paper {:z-depth 1
+                              :style {:margin 5
+                                      :padding 5
+                                      :text-align "center"}}
+                    bio]))
+                 [ui/chip {:style {:margin 2}}
+                  (get-in @column [:account "balance"])]
+                 [ui/chip {:style {:margin 2}}
+                  (get-in @column [:account "sbd_balance"])]
+                 [ui/chip {:style {:margin 2}}
+                  (str (get-in @column [:account "post_count"]) " posts")]
+                 [ui/chip {:style {:margin 2}}
+                  (str (get-in @column [:account "follower_count"]) " follower")]
+                 [ui/chip {:style {:margin 2}}
+                  (str (get-in @column [:account "following_count"]) " following")]])])
            [:div {:class "scroll-view"
                   :ref (fn [el]
                          (reset! scroll-view el))
