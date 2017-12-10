@@ -566,6 +566,19 @@
                              :flex-wrap "wrap"
                              :justify-content "center"
                              :align-items "center"}}
+               (let [metadata (get (:account @column) "json_metadata")
+                     parsed (js->clj (if-not (empty? metadata)
+                                      (js/JSON.parse metadata)
+                                      nil))
+                     bio (-> parsed
+                           (get "profile")
+                           (get "about"))]
+                (when bio
+                 [ui/paper {:z-depth 1
+                            :style {:margin 5
+                                    :padding 5
+                                    :text-align "center"}}
+                  bio]))
                [ui/chip {:style {:margin 2}}
                 (get-in @column [:account "balance"])]
                [ui/chip {:style {:margin 2}}
