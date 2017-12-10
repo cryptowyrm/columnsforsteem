@@ -566,17 +566,17 @@
                                          :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"})}
               [:div {:style {:display "flex"
                              :flex-wrap "wrap"
-                             :justify-content "space-between"
+                             :justify-content "center"
                              :align-items "center"}}
-               [:p {:style {:margin 5}}
+               [ui/chip {:style {:margin 2}}
                 (get-in @column [:account "balance"])]
-               [:p {:style {:margin 5}}
+               [ui/chip {:style {:margin 2}}
                 (get-in @column [:account "sbd_balance"])]
-               [:p {:style {:margin 5}}
+               [ui/chip {:style {:margin 2}}
                 (str (get-in @column [:account "post_count"]) " posts")]
-               [:p {:style {:margin 5}}
+               [ui/chip {:style {:margin 2}}
                 (str (get-in @column [:account "follower_count"]) " follower")]
-               [:p {:style {:margin 5}}
+               [ui/chip {:style {:margin 2}}
                 (str (get-in @column [:account "following_count"]) " following")]]])
            [:div {:class "scroll-view"
                   :ref (fn [el]
