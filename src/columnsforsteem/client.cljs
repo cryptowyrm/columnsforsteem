@@ -543,9 +543,7 @@
                                      :line-height "24px"
                                      :background-color (color :blue200)}}])
                (:tag @column)])]
-           [ui/icon-button {:tooltip "Close this column"
-                            :tooltip-position "bottom-left"
-                            :style {:padding 0
+           [ui/icon-button {:style {:padding 0
                                     :width "auto"
                                     :height "auto"}
                             :on-click remove-fn}
