@@ -100,6 +100,65 @@
       (js/console.log "getDiscussions error: " e)
       (if callback (callback nil)))))
 
+(defn getAccounts [accounts & {:keys [callback]}]
+  (.then
+    (js/steem.database.getAccounts
+      (clj->js accounts))
+    (fn [result]
+      (if callback (callback result)))
+    (fn [e]
+      (js/console.log "getAccounts error: " e)
+      (if callback (callback nil)))))
+
+(defn getFollowCount [account & {:keys [callback]}]
+  (.then
+    (js/steem.call
+      "follow_api"
+      "get_follow_count"
+      (clj->js [account]))
+    (fn [result]
+      (if callback (callback result)))
+    (fn [e]
+      (js/console.log "getFollowCount error: " e)
+      (if callback (callback nil)))))
+
+(defn parse-accounts []
+  (let [columns (r/cursor app-state [:columns])]
+    (filterv #(not (nil? %))
+      (mapv #(if (or (= "blog" (:path %))
+                     (= "feed" (:path %)))
+               (:tag %)
+               nil)
+        @columns))))
+
+(defn update-columns-with-account []
+  (let [columns (r/cursor app-state [:columns])
+        accounts (parse-accounts)]
+    (getAccounts
+      accounts
+      :callback
+      (fn [data]
+        (when data
+          (js/console.log data)
+          (let [account-data (reduce
+                               (fn [old account]
+                                 (assoc old (get account "name") account))
+                               {}
+                               (js->clj data))]
+            (doseq [idx (range (count @columns))]
+              (let [column (r/cursor app-state [:columns idx])]
+                (when (or (= "blog" (:path @column))
+                          (= "feed" (:path @column)))
+                  (getFollowCount
+                    (:tag @column)
+                    :callback
+                    (fn [followsjs]
+                      (let [follows (js->clj followsjs)
+                            merged (merge (get account-data (:tag @column))
+                                          follows)]
+                        (swap! column assoc :account merged)
+                        (js/console.log (clj->js @column))))))))))))))
+
 (defn scroll-element [el duration]
   (let [scroll-step-temp (/ (- (.-scrollTop el)) (/ duration 15))
         scroll-step (if (< scroll-step-temp -1)
@@ -279,7 +338,8 @@
               (= coltype "@") text-rest
               (= coltype "#") text-rest
               :else text)})
-    (save-columns)))
+    (save-columns)
+    (update-columns-with-account)))
 
 (defn card-subtitle [item]
   (let [icon-size 20
@@ -335,6 +395,36 @@
         [:a {:target "_blank"
              :href (str "https://www.steemit.com" (get item "url"))}
          [ui/flat-button {:label "Read on Steemit"}]]]])))
+
+(defn expander [arg1 & arg2]
+  (let [props (r/atom (if arg2 arg1 {}))
+        state (r/atom {})]
+    (fn [arg1 & arg2]
+      (let [children (if arg2 arg2 arg1)
+            child-height (:height @state)]
+        [:div {:style (merge
+                        {:display "flex"
+                         :flex-direction "column"}
+                        (:style @props))}
+         [:div {:style (merge
+                         {:background "silver"
+                          :max-height (if (:expanded @props)
+                                        child-height
+                                        0)
+                          :overflow "hidden"
+                          :transition "max-height 0.5s"}
+                         (:style-top @props))}
+
+          [:div
+           {:style {:display "block"} ; or inline-block
+            :ref #(when %
+                    (swap! state assoc :height (.-clientHeight %)))}
+           (first children)]]
+         [:div {:style (merge {:text-align "center"
+                               :background "#ddd"}
+                         (:style-bottom @props))
+                :on-click (fn [] (swap! props update :expanded not))}
+          (if (:expanded @props) "^" "v")]]))))
 
 (defn column-component [column remove-fn]
   (r/create-class
@@ -464,6 +554,30 @@
                          :flex 1
                          :display "flex"
                          :flex-direction "column"}}
+           (if (or (= "blog" (:path @column))
+                   (= "feed" (:path @column)))
+             [expander {:expanded false
+                        :style {:color "black"}
+                        :style-bottom (if (:dark-mode @settings)
+                                        {:background (color :grey800)
+                                         :color (color :grey600)
+                                         :border-top "1px solid"
+                                         :border-color (color :grey900)
+                                         :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"})}
+              [:div {:style {:display "flex"
+                             :flex-wrap "wrap"
+                             :justify-content "space-between"
+                             :align-items "center"}}
+               [:p {:style {:margin 5}}
+                (get-in @column [:account "balance"])]
+               [:p {:style {:margin 5}}
+                (get-in @column [:account "sbd_balance"])]
+               [:p {:style {:margin 5}}
+                (str (get-in @column [:account "post_count"]) " posts")]
+               [:p {:style {:margin 5}}
+                (str (get-in @column [:account "follower_count"]) " follower")]
+               [:p {:style {:margin 5}}
+                (str (get-in @column [:account "following_count"]) " following")]]])
            [:div {:class "scroll-view"
                   :ref (fn [el]
                          (reset! scroll-view el))
@@ -665,6 +779,7 @@
   (when-not @initial-startup
     (load-settings)
     (load-columns)
+    (update-columns-with-account)
     (reset! initial-startup true))
 
   (r/render-component [content]
