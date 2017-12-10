@@ -397,37 +397,40 @@
          [ui/flat-button {:label "Read on Steemit"}]]]])))
 
 (defn expander [arg1 & arg2]
-  (let [props (r/atom (if arg2 arg1 {}))
-        state (r/atom {})]
+  (let [props (if arg2 arg1 {})
+        state (r/atom {:expanded (:expanded props)})
+        settings (r/cursor app-state [:settings])]
     (fn [arg1 & arg2]
+      ;(:dark-mode @settings)
       (let [children (if arg2 arg2 arg1)
-            child-height (:height @state)]
+            child-height (:height @state)
+            props (if arg2 arg1 {})]
         [:div {:style (merge
                         {:display "flex"
                          :flex-direction "column"}
-                        (:style @props))}
+                        (:style props))}
          [:div {:style (merge
                          {:background "silver"
-                          :max-height (if (:expanded @props)
+                          :max-height (if (:expanded @state)
                                         child-height
                                         0)
                           :overflow "hidden"
                           :transition "max-height 0.5s"}
-                         (:style-top @props))}
+                         (:style-top props))}
 
           [:div
            {:style {:display "block"} ; or inline-block
             :ref #(when %
                     (swap! state assoc :height (.-clientHeight %)))}
            (first children)]]
-         [:div {:title (if (:expanded @props)
+         [:div {:title (if (:expanded @state)
                          "Click to hide"
                          "Click to show")
                 :style (merge {:text-align "center"
                                :background "#ddd"}
-                         (:style-bottom @props))
-                :on-click (fn [] (swap! props update :expanded not))}
-          (if (:expanded @props) "^" "v")]]))))
+                         (:style-bottom props))
+                :on-click (fn [] (swap! state update :expanded not))}
+          (if (:expanded @state) "^" "v")]]))))
 
 (defn column-component [column remove-fn]
   (r/create-class
@@ -564,6 +567,11 @@
                                          :color (color :grey600)
                                          :border-top "1px solid"
                                          :border-color (color :grey900)
+                                         :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"}
+                                        {:background (color :blue500)
+                                         :color (color :grey600)
+                                         :border-top "1px solid"
+                                         :border-color (color :blue700)
                                          :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"})}
               (when (:account @column)
                 [:div {:style {:display "flex"
