@@ -401,7 +401,6 @@
         state (r/atom {:expanded (:expanded props)})
         settings (r/cursor app-state [:settings])]
     (fn [arg1 & arg2]
-      ;(:dark-mode @settings)
       (let [children (if arg2 arg2 arg1)
             child-height (:height @state)
             props (if arg2 arg1 {})]
@@ -412,7 +411,7 @@
          [:div {:style (merge
                          {:background "silver"
                           :max-height (if (:expanded @state)
-                                        child-height
+                                        (* 2 child-height) ; * 2 is hack
                                         0)
                           :overflow "hidden"
                           :transition "max-height 0.5s"}
