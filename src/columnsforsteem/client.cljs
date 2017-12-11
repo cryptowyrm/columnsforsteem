@@ -569,7 +569,7 @@
                                          :border-color (color :grey900)
                                          :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"}
                                         {:background (color :blue500)
-                                         :color (color :grey600)
+                                         :color (color :blue300)
                                          :border-top "1px solid"
                                          :border-color (color :blue700)
                                          :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"})}
