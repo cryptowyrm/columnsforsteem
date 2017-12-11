@@ -562,6 +562,9 @@
                    (= "feed" (:path @column)))
              [expander {:expanded true
                         :style {:color "black"}
+                        :style-top (if (:dark-mode @settings)
+                                    {:background (color :grey900)}
+                                    {:background (color :grey200)})
                         :style-bottom (if (:dark-mode @settings)
                                         {:background (color :grey800)
                                          :color (color :grey600)
