@@ -11,7 +11,8 @@
   app-state
   (r/atom {:drawer-open false
            :settings {:hide-nsfw true
-                      :dark-mode true}
+                      :dark-mode true
+                      :expand-user true}
            :columns [{:id (random-uuid) :path "created" :tag "technology"}
                      {:id (random-uuid) :path "created" :tag "news"}
                      {:id (random-uuid) :path "hot"}
@@ -560,7 +561,7 @@
                          :flex-direction "column"}}
            (if (or (= "blog" (:path @column))
                    (= "feed" (:path @column)))
-             [expander {:expanded true
+             [expander {:expanded (:expand-user @settings)
                         :style-top (if (:dark-mode @settings)
                                     {:background (color :grey900)}
                                     {:background (color :grey200)})
@@ -693,7 +694,7 @@
       [ui/drawer {:open (:drawer-open @app-state)
                   :z-depth 1}
        [ui/list
-        [ui/subheader "Settings"]
+        [ui/subheader "App Settings"]
         [ui/list-item {:primary-text "Hide NSFW images"
                        :right-toggle
                          (r/as-element
@@ -709,6 +710,16 @@
                             {:toggled (:dark-mode @settings)
                              :on-toggle (fn [e toggled]
                                           (swap! settings assoc :dark-mode toggled)
+                                          (save-settings))}])}]
+        [ui/subheader "Column Settings"]
+        [ui/list-item {:primary-text "Show user info by default"
+                       :title "If activated, the box with user information at the top of user columns is opened by default"
+                       :right-toggle
+                         (r/as-element
+                           [ui/toggle
+                            {:toggled (:expand-user @settings)
+                             :on-toggle (fn [e toggled]
+                                          (swap! settings assoc :expand-user toggled)
                                           (save-settings))}])}]
         [ui/subheader "Info"]
         [:a {:target "_blank"
