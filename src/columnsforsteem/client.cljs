@@ -140,7 +140,6 @@
       :callback
       (fn [data]
         (when data
-          (js/console.log data)
           (let [account-data (reduce
                                (fn [old account]
                                  (assoc old (get account "name") account))
@@ -157,8 +156,7 @@
                       (let [follows (js->clj followsjs)
                             merged (merge (get account-data (:tag @column))
                                           follows)]
-                        (swap! column assoc :account merged)
-                        (js/console.log (clj->js @column))))))))))))))
+                        (swap! column assoc :account merged)))))))))))))
 
 (defn scroll-element [el duration]
   (let [scroll-step-temp (/ (- (.-scrollTop el)) (/ duration 15))
