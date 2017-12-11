@@ -696,6 +696,7 @@
        [ui/list
         [ui/subheader "App Settings"]
         [ui/list-item {:primary-text "Hide NSFW images"
+                       :title "Hides images of posts that are tagged with NSFW, so there could still be NSFW images displayed if the author didn't add the tag"
                        :right-toggle
                          (r/as-element
                            [ui/toggle
