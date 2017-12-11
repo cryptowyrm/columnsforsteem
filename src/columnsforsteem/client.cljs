@@ -600,7 +600,7 @@
                  [ui/chip {:style {:margin 2}}
                   (str (get-in @column [:account "post_count"]) " posts")]
                  [ui/chip {:style {:margin 2}}
-                  (str (get-in @column [:account "follower_count"]) " follower")]
+                  (str (get-in @column [:account "follower_count"]) " followers")]
                  [ui/chip {:style {:margin 2}}
                   (str (get-in @column [:account "following_count"]) " following")]])])
            [:div {:class "scroll-view"
