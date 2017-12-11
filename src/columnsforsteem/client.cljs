@@ -423,7 +423,8 @@
             :ref #(when %
                     (swap! state assoc :height (.-clientHeight %)))}
            (first children)]]
-         [:div {:title (if (:expanded @state)
+         [:div {:class "expander-bottom"
+                :title (if (:expanded @state)
                          "Click to hide"
                          "Click to show")
                 :style (merge {:text-align "center"
