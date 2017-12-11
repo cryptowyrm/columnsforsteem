@@ -562,7 +562,6 @@
            (if (or (= "blog" (:path @column))
                    (= "feed" (:path @column)))
              [expander {:expanded true
-                        :style {:color "black"}
                         :style-top (if (:dark-mode @settings)
                                     {:background (color :grey900)}
                                     {:background (color :grey200)})
@@ -581,7 +580,8 @@
                 [:div {:style {:display "flex"
                                :flex-wrap "wrap"
                                :justify-content "center"
-                               :align-items "center"}}
+                               :align-items "center"
+                               :padding-bottom 2}}
                  (let [metadata (get (:account @column) "json_metadata")
                        parsed (js->clj (if-not (empty? metadata)
                                         (js/JSON.parse metadata)
