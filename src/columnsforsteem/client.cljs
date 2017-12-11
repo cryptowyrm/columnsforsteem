@@ -816,6 +816,10 @@
     (load-settings)
     (load-columns)
     (update-columns-with-account)
+    (js/setInterval
+      (fn []
+        (update-columns-with-account))
+      (* 5 60000)) ; update every 5 minutes
     (reset! initial-startup true))
 
   (r/render-component [content]
