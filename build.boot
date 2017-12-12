@@ -5,6 +5,7 @@
                   [org.clojure/test.check "0.9.0" :scope "test"]
                   [crisptrutski/boot-cljs-test "0.3.5-SNAPSHOT" :scope "test"]
                   [nightlight "2.0.4" :scope "test"]
+                  [proto-repl "0.3.1" :scope "test"]
                   ; project deps
                   [org.clojure/clojure "1.9.0-beta4"]
                   [org.clojure/clojurescript "1.9.946"]
@@ -58,7 +59,7 @@
     (watch)
     (test-cljs :js-env :phantom)))
 
-(deftask run []
+(deftask dev []
   (set-env! :resource-paths #{"resources" "dev-resources"})
   (comp
     (with-pass-thru _
