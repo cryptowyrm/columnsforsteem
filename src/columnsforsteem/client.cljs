@@ -7,16 +7,27 @@
 
 (defonce column-index (atom 0))
 
+(defn default-settings []
+  {:hide-nsfw true
+   :dark-mode true
+   :expand-user true})
+
 (defonce
   app-state
   (r/atom {:drawer-open false
-           :settings {:hide-nsfw true
-                      :dark-mode true
-                      :expand-user true}
+           :settings (default-settings)
            :columns [{:id (random-uuid) :path "created" :tag "technology"}
                      {:id (random-uuid) :path "created" :tag "news"}
                      {:id (random-uuid) :path "hot"}
                      {:id (random-uuid) :path "blog" :tag "crypticwyrm"}]}))
+
+(defn setting-for [setting-key]
+  (let [setting (get-in @app-state [:settings setting-key])]
+    (if (nil? setting)
+      (do
+        (swap! app-state assoc-in [:settings setting-key] (setting-key (default-settings)))
+        (setting-key (default-settings)))
+      setting)))
 
 (defn load-settings []
   (let [settings (r/cursor app-state [:settings])
@@ -368,8 +379,7 @@
 
 (defn card-subtitle [item]
   (let [icon-size 20
-        settings (r/cursor app-state [:settings])
-        dark-mode (:dark-mode @settings)
+        dark-mode (setting-for :dark-mode)
         icon-color (if dark-mode (color :grey300) (color :grey600))]
     [:div {:style {:display "flex"
                    :justify-content "space-between"
@@ -392,10 +402,9 @@
         (get item "total_payout_value"))]]))
 
 (defn post-card [item]
-  (let [settings (r/cursor app-state [:settings])
-        metadata (js->clj (js/JSON.parse (get item "json_metadata")))]
+  (let [metadata (js->clj (js/JSON.parse (get item "json_metadata")))]
     (fn [item]
-      (:dark-mode @settings) ; hack to make posts rerender when toggling theme
+      (setting-for :dark-mode) ; hack to make posts rerender when toggling theme
       [ui/card {:id (str "post-" (get item "id"))
                 :container-style {:margin-bottom 10}}
        [ui/card-header {:title (get item "author")
@@ -407,7 +416,7 @@
                                     :on-click #(add-column (str "@" (get item "author")))}])
                         :subtitle (format-time (get item "created"))}]
        (if-let [image (parse-image-url item)]
-         (when-not (and (:hide-nsfw @settings)
+         (when-not (and (setting-for :hide-nsfw)
                         (> (count (filter #(= % "nsfw") (get metadata "tags"))) 0))
            [ui/card-media
             [:img {:src (cached-image image)}]]))
@@ -423,8 +432,7 @@
 
 (defn expander [arg1 & arg2]
   (let [props (if arg2 arg1 {})
-        state (r/atom {:expanded (:expanded props)})
-        settings (r/cursor app-state [:settings])]
+        state (r/atom {:expanded (:expanded props)})]
     (fn [arg1 & arg2]
       (let [children (if arg2 arg2 arg1)
             child-height (:height @state)
@@ -471,8 +479,7 @@
            (.scrollIntoView (r/dom-node this))
            (load-column column))))
      :reagent-render
-     (let [settings (r/cursor app-state [:settings])
-           scroll-view (atom nil)
+     (let [scroll-view (atom nil)
            header (atom nil)
            header-wrapper (atom nil)]
        (fn [column remove-fn]
@@ -487,7 +494,7 @@
                             :min-width 300
                             :max-width 500}}
           [:div {:ref (fn [el] (reset! header el))
-                 :style {:background (if (:dark-mode @settings)
+                 :style {:background (if (setting-for :dark-mode)
                                        (color :grey800)
                                        (color :blue500))
                          :color "white"
@@ -514,7 +521,7 @@
                                                                      :more nil)
                                                  (load-column column :forced true)
                                                  (save-columns)))
-                                  :style {:background (if (:dark-mode @settings)
+                                  :style {:background (if (setting-for :dark-mode)
                                                         (color :grey900)
                                                         (color :blue300))
                                           :height 28}
@@ -536,7 +543,7 @@
                                                                      :more nil)
                                                  (load-column column :forced true)
                                                  (save-columns)))
-                                  :style {:background (if (:dark-mode @settings)
+                                  :style {:background (if (setting-for :dark-mode)
                                                         (color :grey900)
                                                         (color :blue300))
                                           :height 28}
@@ -557,7 +564,7 @@
                                       :overflow "hidden"
                                       :text-overflow "ellipsis"}
                         :label-color (color :white)
-                        :background-color (if (:dark-mode @settings)
+                        :background-color (if (setting-for :dark-mode)
                                             (color :grey700)
                                             (color :blue300))
                         :style {:margin-left 10}}
@@ -573,7 +580,7 @@
                                      :height 24
                                      :line-height "24px"
                                      :font-size "20px"
-                                     :background-color (if (:dark-mode @settings)
+                                     :background-color (if (setting-for :dark-mode)
                                                          (color :grey500)
                                                          (color :blue200))}}])
                (:tag @column)])]
@@ -588,11 +595,11 @@
                          :flex-direction "column"}}
            (if (or (= "blog" (:path @column))
                    (= "feed" (:path @column)))
-             [expander {:expanded (:expand-user @settings)
-                        :style-top (if (:dark-mode @settings)
+             [expander {:expanded (setting-for :expand-user)
+                        :style-top (if (setting-for :dark-mode)
                                     {:background (color :grey900)}
                                     {:background (color :grey200)})
-                        :style-bottom (if (:dark-mode @settings)
+                        :style-bottom (if (setting-for :dark-mode)
                                         {:background (color :grey800)
                                          :color (color :grey600)
                                          :border-top "1px solid"
@@ -757,7 +764,7 @@
                        :right-toggle
                          (r/as-element
                            [ui/toggle
-                            {:toggled (:hide-nsfw @settings)
+                            {:toggled (setting-for :hide-nsfw)
                              :on-toggle (fn [e toggled]
                                           (swap! settings assoc :hide-nsfw toggled)
                                           (save-settings))}])}]
@@ -765,7 +772,7 @@
                        :right-toggle
                          (r/as-element
                            [ui/toggle
-                            {:toggled (:dark-mode @settings)
+                            {:toggled (setting-for :dark-mode)
                              :on-toggle (fn [e toggled]
                                           (swap! settings assoc :dark-mode toggled)
                                           (save-settings))}])}]
@@ -775,7 +782,7 @@
                        :right-toggle
                          (r/as-element
                            [ui/toggle
-                            {:toggled (:expand-user @settings)
+                            {:toggled (setting-for :expand-user)
                              :on-toggle (fn [e toggled]
                                           (swap! settings assoc :expand-user toggled)
                                           (save-settings))}])}]
@@ -802,11 +809,10 @@
 
 (defn content []
   (let [columns (r/cursor app-state [:columns])
-        settings (r/cursor app-state [:settings])
         show-column-dialog (r/atom false)]
     (fn []
       [ui/mui-theme-provider
-       (if (:dark-mode @settings)
+       (if (setting-for :dark-mode)
          {:mui-theme (get-mui-theme
                        (assoc (js->clj
                                 (aget js/MaterialUIStyles "DarkRawTheme")
@@ -829,7 +835,7 @@
                        :margin-left (when (:drawer-open @app-state) 256)
                        :overflow "hidden"}}
          [ui/mui-theme-provider
-          (if (:dark-mode @settings)
+          (if (setting-for :dark-mode)
             {:mui-theme (get-mui-theme
                           (assoc (js->clj
                                    (aget js/MaterialUIStyles "DarkRawTheme")
