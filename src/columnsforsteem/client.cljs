@@ -123,6 +123,32 @@
       (js/console.log "getFollowCount error: " e)
       (if callback (callback nil)))))
 
+(defn steemPerMvests [total_vesting_fund_steem total_vesting_shares]
+  (/ total_vesting_fund_steem total_vesting_shares))
+
+(defn vestsToSteemPower [vests steem_per_mvests]
+  (* vests steem_per_mvests))
+
+(defn vests2sp [vests]
+  (let [dynamic-global-properties (r/cursor app-state [:dynamic-global-properties])]
+    (vestsToSteemPower vests
+                       (steemPerMvests
+                         (js/parseFloat (get @dynamic-global-properties
+                                             "total_vesting_fund_steem"))
+                         (js/parseFloat (get @dynamic-global-properties
+                                             "total_vesting_shares"))))))
+
+(defn getDynamicGlobalProperties [& {:keys [callback]}]
+  (let [dynamic-global-properties (r/cursor app-state [:dynamic-global-properties])]
+    (.then
+      (js/steem.database.getDynamicGlobalProperties)
+      (fn [result]
+        (reset! dynamic-global-properties (js->clj result))
+        (if callback (callback result)))
+      (fn [e]
+        (js/console.log "getDynamicGlobalProperties error: " e)
+        (if callback (callback e))))))
+
 (defn parse-accounts []
   (let [columns (r/cursor app-state [:columns])]
     (filterv #(not (nil? %))
@@ -593,6 +619,9 @@
                                       :padding 5
                                       :text-align "center"}}
                     bio]))
+                 [ui/chip {:style {:margin 2}
+                           :title "Steem Power"}
+                  (.toFixed (vests2sp (js/parseFloat (get-in @column [:account "vesting_shares"]))) 3) " SP"]
                  [ui/chip {:style {:margin 2}}
                   (get-in @column [:account "balance"])]
                  [ui/chip {:style {:margin 2}}
@@ -815,6 +844,11 @@
   (when-not @initial-startup
     (load-settings)
     (load-columns)
+    (getDynamicGlobalProperties)
+    (js/setInterval
+      (fn []
+        (getDynamicGlobalProperties))
+      (* 5 60000))
     (update-columns-with-account)
     (js/setInterval
       (fn []
