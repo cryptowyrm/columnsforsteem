@@ -632,6 +632,7 @@
                              :label-style {:line-height line-height}}
                     (get-in @column [:account "balance"])]
                    [ui/chip {:style {:margin 2}
+                             :title "Steem Dollars"
                              :label-style {:line-height line-height}}
                     (get-in @column [:account "sbd_balance"])]
                    [ui/chip {:style {:margin 2}
