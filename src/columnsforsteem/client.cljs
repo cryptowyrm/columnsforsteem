@@ -712,8 +712,7 @@
                             :margin-right "auto"}}
               [ui/refresh-indicator {:top 0
                                      :left 0
-                                     :status (if (or (:loading-bottom @column)
-                                                     (:more @column))
+                                     :status (if (:loading-bottom @column)
                                                "loading"
                                                "hide")}]]]]]]))}))
 
