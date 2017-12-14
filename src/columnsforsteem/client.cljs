@@ -631,7 +631,21 @@
                  [ui/chip {:style {:margin 2}}
                   (str (get-in @column [:account "follower_count"]) " followers")]
                  [ui/chip {:style {:margin 2}}
-                  (str (get-in @column [:account "following_count"]) " following")]])])
+                  (str (get-in @column [:account "following_count"]) " following")]
+                 [ui/chip {:style {:margin 2}
+                           :title "Voting Power"
+                           :label-style {:display "flex"
+                                         :align-items "center"}}
+                  [ui/linear-progress
+                   {:max 10000
+                    :mode "determinate"
+                    :value (get-in @column [:account "voting_power"])
+                    :color (color :grey500)
+                    :style {:height 15
+                            :min-width 80
+                            :margin-right "8px"}}]
+                  (.toFixed (/ (get-in @column [:account "voting_power"]) 100) 2)
+                  " % VP"]])])
            [:div {:class "scroll-view"
                   :ref (fn [el]
                          (reset! scroll-view el))
