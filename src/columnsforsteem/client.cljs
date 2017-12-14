@@ -10,7 +10,8 @@
 (defn default-settings []
   {:hide-nsfw true
    :dark-mode true
-   :expand-user true})
+   :expand-user true
+   :show-reblogs true})
 
 (defonce
   app-state
@@ -401,12 +402,15 @@
         (get item "pending_payout_value")
         (get item "total_payout_value"))]]))
 
-(defn post-card [item]
+(defn post-card [item reblog]
   (let [metadata (js->clj (js/JSON.parse (get item "json_metadata")))]
     (fn [item]
       (setting-for :dark-mode) ; hack to make posts rerender when toggling theme
       [ui/card {:id (str "post-" (get item "id"))
-                :container-style {:margin-bottom 10}}
+                :container-style {:margin-bottom 10
+                                  :display (when (and (not (setting-for :show-reblogs))
+                                                      reblog)
+                                            "none")}}
        [ui/card-header {:title (get item "author")
                         :avatar (r/as-element
                                   [ui/avatar
@@ -694,9 +698,14 @@
                                                       (empty? (:data @column)))
                                                "loading"
                                                "hide")}]]
-             (for [item (:data @column)]
-               ^{:key (get item "id")}
-               [post-card item])
+             (doall
+               (for [item (:data @column)]
+                 ^{:key (get item "id")}
+                 [post-card
+                  item
+                  (and (= "blog" (:path @column))
+                       (not (= (:tag @column)
+                               (get item "author"))))]))
              [:div {:style {:position "relative"
                             :width 40
                             :margin-left "auto"
@@ -785,6 +794,15 @@
                             {:toggled (setting-for :expand-user)
                              :on-toggle (fn [e toggled]
                                           (swap! settings assoc :expand-user toggled)
+                                          (save-settings))}])}]
+        [ui/list-item {:primary-text "Show reblogs"
+                       :title "If activated, user columns will also show posts the user reblogged (resteemed)"
+                       :right-toggle
+                         (r/as-element
+                           [ui/toggle
+                            {:toggled (setting-for :show-reblogs)
+                             :on-toggle (fn [e toggled]
+                                          (swap! settings assoc :show-reblogs toggled)
                                           (save-settings))}])}]
         [ui/subheader "Info"]
         [:a {:target "_blank"
