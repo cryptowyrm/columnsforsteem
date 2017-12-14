@@ -566,13 +566,16 @@
                  [ui/avatar {:src (avatar-url (:tag @column))
                              :style {:width 24
                                      :height 24}}]
-                 [ui/avatar {:icon (r/as-element [ui/font-icon "#"])
-                             :size 24
-                             :color (color :blue500)
+                 [ui/avatar {:size 24
+                             :icon (ic/action-label {:style {:margin 0}})
+                             :color (color :grey200)
                              :style {:width 24
                                      :height 24
                                      :line-height "24px"
-                                     :background-color (color :blue200)}}])
+                                     :font-size "20px"
+                                     :background-color (if (:dark-mode @settings)
+                                                         (color :grey500)
+                                                         (color :blue200))}}])
                (:tag @column)])]
            [ui/icon-button {:style {:padding 0
                                     :width "auto"
