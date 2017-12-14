@@ -619,33 +619,45 @@
                                       :padding 5
                                       :text-align "center"}}
                     bio]))
-                 [ui/chip {:style {:margin 2}
-                           :title "Steem Power"}
-                  (.toFixed (vests2sp (js/parseFloat (get-in @column [:account "vesting_shares"]))) 3) " SP"]
-                 [ui/chip {:style {:margin 2}}
-                  (get-in @column [:account "balance"])]
-                 [ui/chip {:style {:margin 2}}
-                  (get-in @column [:account "sbd_balance"])]
-                 [ui/chip {:style {:margin 2}}
-                  (str (get-in @column [:account "post_count"]) " posts")]
-                 [ui/chip {:style {:margin 2}}
-                  (str (get-in @column [:account "follower_count"]) " followers")]
-                 [ui/chip {:style {:margin 2}}
-                  (str (get-in @column [:account "following_count"]) " following")]
-                 [ui/chip {:style {:margin 2}
-                           :title "Voting Power"
-                           :label-style {:display "flex"
-                                         :align-items "center"}}
-                  [ui/linear-progress
-                   {:max 10000
-                    :mode "determinate"
-                    :value (get-in @column [:account "voting_power"])
-                    :color (color :grey500)
-                    :style {:height 15
-                            :min-width 80
-                            :margin-right "8px"}}]
-                  (.toFixed (/ (get-in @column [:account "voting_power"]) 100) 2)
-                  " % VP"]])])
+                 (let [line-height "24px"]
+                  [:div {:style {:display "flex"
+                                 :flex-wrap "wrap"
+                                 :justify-content "center"
+                                 :align-items "center"}}
+                   [ui/chip {:style {:margin 2}
+                             :label-style {:line-height line-height}
+                             :title "Steem Power"}
+                    (.toFixed (vests2sp (js/parseFloat (get-in @column [:account "vesting_shares"]))) 3) " SP"]
+                   [ui/chip {:style {:margin 2}
+                             :label-style {:line-height line-height}}
+                    (get-in @column [:account "balance"])]
+                   [ui/chip {:style {:margin 2}
+                             :label-style {:line-height line-height}}
+                    (get-in @column [:account "sbd_balance"])]
+                   [ui/chip {:style {:margin 2}
+                             :label-style {:line-height line-height}}
+                    (str (get-in @column [:account "post_count"]) " posts")]
+                   [ui/chip {:style {:margin 2}
+                             :label-style {:line-height line-height}}
+                    (str (get-in @column [:account "follower_count"]) " followers")]
+                   [ui/chip {:style {:margin 2}
+                             :label-style {:line-height line-height}}
+                    (str (get-in @column [:account "following_count"]) " following")]
+                   [ui/chip {:style {:margin 2}
+                             :title "Voting Power"
+                             :label-style {:display "flex"
+                                           :align-items "center"
+                                           :line-height line-height}}
+                    [ui/linear-progress
+                     {:max 10000
+                      :mode "determinate"
+                      :value (get-in @column [:account "voting_power"])
+                      :color (color :grey500)
+                      :style {:height 15
+                              :min-width 80
+                              :margin-right "8px"}}]
+                    (.toFixed (/ (get-in @column [:account "voting_power"]) 100) 2)
+                    " % VP"]])])])
            [:div {:class "scroll-view"
                   :ref (fn [el]
                          (reset! scroll-view el))
