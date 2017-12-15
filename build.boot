@@ -7,6 +7,8 @@
                   [nightlight "2.0.4" :scope "test"]
                   [proto-repl "0.3.1" :scope "test"]
                   [binaryage/devtools "0.9.8" :scope "test"]
+                  [binaryage/dirac "RELEASE" :scope "test"]
+                  [powerlaces/boot-cljs-devtools "0.2.0" :scope "test"]
                   ; project deps
                   [org.clojure/clojure "1.9.0-beta4"]
                   [org.clojure/clojurescript "1.9.946"]
@@ -41,6 +43,7 @@
   '[adzerk.boot-cljs :refer [cljs]]
   '[adzerk.boot-reload :refer [reload]]
   '[crisptrutski.boot-cljs-test :refer [test-cljs]]
+  '[powerlaces.boot-cljs-devtools :refer [cljs-devtools dirac]]
   'columnsforsteem.server)
 
 (deftask testing []
@@ -72,6 +75,8 @@
         (nightlight/start {:port 4000 :url url})))
     (watch)
     (reload :asset-path "columnsforsteem")
+    (cljs-devtools)
+    (dirac)
     (cljs
       :source-map true
       :optimizations :none

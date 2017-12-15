@@ -1,3 +1,3 @@
 {:require [nightlight.repl-server columnsforsteem.client],
  :init-fns [cljs.spec.test.alpha/instrument columnsforsteem.client/init],
- :compiler-options {:preloads [devtools.preload]}}
+ :compiler-options {}}
