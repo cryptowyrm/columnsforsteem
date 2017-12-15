@@ -6,6 +6,7 @@
                   [crisptrutski/boot-cljs-test "0.3.5-SNAPSHOT" :scope "test"]
                   [nightlight "2.0.4" :scope "test"]
                   [proto-repl "0.3.1" :scope "test"]
+                  [binaryage/devtools "0.9.8" :scope "test"]
                   ; project deps
                   [org.clojure/clojure "1.9.0-beta4"]
                   [org.clojure/clojurescript "1.9.946"]
