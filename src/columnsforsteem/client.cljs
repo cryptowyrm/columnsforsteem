@@ -211,12 +211,13 @@
                               15))))
 
 (defn all-images [posts]
-  (filter #(not (empty? %))
-    (map (fn [post]
-           (if-let [image (parse-image-url post)]
-             (cached-image image)
-             nil))
-      posts)))
+  (set
+    (filter #(not (empty? %))
+      (map (fn [post]
+             (if-let [image (parse-image-url post)]
+               (cached-image image)
+               nil))
+        posts))))
 
 (defn preload-images [images callback]
   (let [left (atom (count images))
