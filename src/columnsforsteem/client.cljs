@@ -260,14 +260,52 @@
    "trending" 25
    "hot" 25})
 
-(defn load-column [column & {:keys [forced second path]}]
+(defn column-at-top [column]
+  (= 0 (.-scrollTop (.querySelector
+                      (.querySelector js/document (str "#" (:element @column)))
+                      ".scroll-view"))))
+
+(defn load-column [column & {:keys [forced]}]
+  (when (or forced
+            (and (empty? (:buffer @column))
+                 (not (:loading @column))
+                 (not (:loading-bottom @column))
+                 (column-at-top column)))
+    (let [loaded-path (:path @column)]
+      (swap! column assoc
+        :last-loaded (js/Date.)
+        :loading true)
+      (js/console.log "getDiscussions")
+      (getDiscussions
+        (:path @column)
+        (if-let [tag (:tag @column)] tag "")
+        25
+        :callback
+        (fn [result-js]
+          (when (= loaded-path (:path @column))
+            (let [result (js->clj result-js)]
+              (preload-images
+                (all-images result)
+                (fn [preloaded]
+                  (when (= loaded-path (:path @column))
+                    (swap! column assoc
+                      :images @preloaded
+                      :loading false
+                      :buffer (if (or (empty? (:data @column))
+                                      forced)
+                                nil
+                                (new-posts result (:data @column)))
+                      :data (if (or (empty? (:data @column))
+                                    forced)
+                              result
+                              (vec (refreshed-posts result (:data @column)))))))))))))))
+
+(defn load-column-2 [column & {:keys [forced second path]}]
   (when (or forced
             second
             (and (not (:loading @column))
                  (not (:loading-bottom @column))
-                 (= 0 (.-scrollTop (.querySelector
-                                     (.querySelector js/document (str "#" (:element @column)))
-                                     ".scroll-view")))))
+                 (column-at-top column)))
     (swap! column assoc :last-loaded (js/Date.)
       :loading true)
     (let [loaded-path (if (nil? path)
@@ -342,7 +380,7 @@
                   (swap! column assoc :loading false))))))))))
 
 (defn load-column-bottom [column]
-  ;(js/console.log "Load bottom...")
+  (js/console.log "Load bottom...")
   (if (and (> (count (:data @column)) 0)
            (not (:loading @column))
            (not (:loading-bottom @column))
@@ -932,6 +970,28 @@
 
   (when (nil? @refresh-interval)
     (let [columns (r/cursor app-state [:columns])]
+      (js/setInterval
+        (fn []
+          (doseq [idx (range (count @columns))]
+            (let [column (r/cursor app-state [:columns idx])]
+              (when (and (not (empty? (:buffer @column)))
+                         (column-at-top column))
+                (let [post (last (:buffer @column))
+                      column-element (.querySelector
+                                       js/document (str "#" (:element @column)))
+                      scroll-view (.querySelector column-element ".scroll-view")
+                      target (.querySelector
+                               column-element
+                               (str "#post-" (get (first (:data @column)) "id")))]
+                  (swap! column assoc
+                    :buffer (butlast (:buffer @column))
+                    :data (into [post] (take 24 (:data @column))))
+                  (r/after-render
+                    (fn []
+                      (when target
+                        (.scrollIntoView target)
+                        (scroll-element scroll-view 500)))))))))
+        3000)
       (reset! refresh-interval
         (js/setInterval
           (fn []
