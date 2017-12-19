@@ -235,6 +235,16 @@
           (set! (.-src image) image-link)
           (swap! preloaded conj image))))))
 
+(defn sorted-posts [posts]
+  (reverse (sort-by #(get % "created") posts)))
+
+(defn refreshed-posts
+  "Replaces data of old posts with any new data from new posts, discarding
+  any posts that are not included in old posts."
+  [new-p old-p]
+  (let [mapped (reduce (fn [y x] (assoc y (get x "id") x)) {} new-p)]
+    (map (fn [x] (if-let [y (mapped (get x "id"))] y x)) old-p)))
+
 (defn new-posts
   "Takes a sequence of new posts and a sequence of old posts and returns
   a sequence of those that are not included in the old, based on the post id."
