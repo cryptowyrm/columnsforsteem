@@ -235,6 +235,13 @@
           (set! (.-src image) image-link)
           (swap! preloaded conj image))))))
 
+(defn new-posts
+  "Takes a sequence of new posts and a sequence of old posts and returns
+  a sequence of those that are not included in the old, based on the post id."
+  [new-p old-p]
+  (let [old-ids (set (map #(get % "id") old-p))]
+    (filter #(not (old-ids (get % "id"))) new-p)))
+
 ; number of posts to load for different column sort orders
 (def column-load-num
   {"created" 50

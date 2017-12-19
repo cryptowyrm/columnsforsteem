@@ -41,3 +41,8 @@
 (deftest test-has-whitespace
   (is (= true (app/has-whitespace "has whitespace")))
   (is (= false (app/has-whitespace "nowhitespace"))))
+
+(deftest test-new-posts
+  (let [new-p '({"id" 1} {"id" 2} {"id" 3} {"id" 4} {"id" 5} {"id" 6})
+        old-p '({"id" 1} {"id" 2} {"id" 3})]
+    (is (= '({"id" 4} {"id" 5} {"id" 6}) (app/new-posts new-p old-p)))))
