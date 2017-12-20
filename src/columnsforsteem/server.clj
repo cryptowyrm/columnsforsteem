@@ -27,5 +27,4 @@
       (wrap-params)
       (wrap-reload)
       (wrap-resource "columnsforsteem")
-      (run-server {:port 0})))
-
+      (run-server {:port 8000})))
