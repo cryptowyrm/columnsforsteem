@@ -46,3 +46,7 @@
   (let [new-p '({"id" 1} {"id" 2} {"id" 3} {"id" 4} {"id" 5} {"id" 6})
         old-p '({"id" 1} {"id" 2} {"id" 3})]
     (is (= '({"id" 4} {"id" 5} {"id" 6}) (app/new-posts new-p old-p)))))
+
+(deftest test-should-load-fully
+  (is (= true (app/should-load-fully (atom {:path "trending"}))))
+  (is (= false (app/should-load-fully (atom {:path "created"})))))
