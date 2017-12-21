@@ -20,6 +20,7 @@
                   [ring "1.6.2"]
                   [reagent "0.8.0-alpha2"]
                   [cljs-react-material-ui "0.2.48"]
+                  [com.cemerick/url "0.1.1"]
                   [rum "0.10.8"]
                   [play-cljs "0.10.2"]
                   [compojure "1.6.0"]
