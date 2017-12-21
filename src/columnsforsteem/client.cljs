@@ -287,7 +287,8 @@
               (preload-images
                 (all-images result)
                 (fn [preloaded]
-                  (when (= loaded-path (:path @column))
+                  (when (and (= loaded-path (:path @column))
+                             (column-at-top column))
                     (swap! column assoc
                       :images @preloaded
                       :loading false
