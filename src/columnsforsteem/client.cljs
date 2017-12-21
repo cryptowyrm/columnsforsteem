@@ -265,6 +265,12 @@
                       (.querySelector js/document (str "#" (:element @column)))
                       ".scroll-view"))))
 
+(defn should-load-fully
+  "Returns true if column should do a full load instead of scrolling
+  in new posts through the buffer."
+  [column]
+  (not (#{"created" "blog" "feed"} (:path @column))))
+
 (defn load-column [column & {:keys [forced]}]
   (when (or forced
             (and (empty? (:buffer @column))
@@ -293,11 +299,13 @@
                       :images @preloaded
                       :loading false
                       :buffer (if (or (empty? (:data @column))
-                                      forced)
+                                      forced
+                                      (should-load-fully column))
                                 nil
                                 (new-posts result (:data @column)))
                       :data (if (or (empty? (:data @column))
-                                    forced)
+                                    forced
+                                    (should-load-fully column))
                               result
                               (vec (refreshed-posts result (:data @column)))))))))))))))
 
