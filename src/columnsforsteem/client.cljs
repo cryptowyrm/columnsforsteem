@@ -293,21 +293,23 @@
               (preload-images
                 (all-images result)
                 (fn [preloaded]
-                  (when (and (= loaded-path (:path @column))
-                             (column-at-top column))
-                    (swap! column assoc
-                      :images @preloaded
-                      :loading false
-                      :buffer (if (or (empty? (:data @column))
+                  (when (= loaded-path (:path @column))
+                    (if (column-at-top column)
+                      (swap! column assoc
+                        :images @preloaded
+                        :loading false
+                        :buffer (if (or (empty? (:data @column))
+                                        forced
+                                        (should-load-fully column))
+                                  nil
+                                  (new-posts result (:data @column)))
+                        :data (if (or (empty? (:data @column))
                                       forced
                                       (should-load-fully column))
-                                nil
-                                (new-posts result (:data @column)))
-                      :data (if (or (empty? (:data @column))
-                                    forced
-                                    (should-load-fully column))
-                              result
-                              (vec (refreshed-posts result (:data @column)))))))))))))))
+                                result
+                                (vec (refreshed-posts result (:data @column)))))
+                      (swap! column assoc
+                        :loading false))))))))))))
 
 (defn load-column-2 [column & {:keys [forced second path]}]
   (when (or forced
