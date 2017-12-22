@@ -20,6 +20,9 @@
       "http://www.newsbtc.com/https://s3.amazonaws.com/main-newsbtc-images/2017/05/fed-talk-bitcoin-825x510.jpg"
       "<br>http://www.newsbtc.com/https://s3.amazonaws.com/main-newsbtc-images/2017/05/fed-talk-bitcoin-825x510.jpg</br>"
 
+      "https://steemdb.com/vessel/43.png"
+      "![https://steemdb.com/vessel/43.png](https://steemdb.com/vessel/43.png)"
+
       nil
       "nothing")))
 
