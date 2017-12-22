@@ -220,7 +220,7 @@
         posts))))
 
 (defn preload-images [images callback]
-  (js/console.log "preload: " images)
+  ;(js/console.log "preload: " images)
   (let [left (atom (count images))
         preloaded (atom {})]
     (if (empty? images)
@@ -282,7 +282,7 @@
       (swap! column assoc
         :last-loaded (js/Date.)
         :loading true)
-      (js/console.log "getDiscussions")
+      ;(js/console.log "getDiscussions")
       (getDiscussions
         (:path @column)
         (if-let [tag (:tag @column)] tag "")
@@ -394,7 +394,7 @@
                   (swap! column assoc :loading false))))))))))
 
 (defn load-column-bottom [column]
-  (js/console.log "Load bottom...")
+  ;(js/console.log "Load bottom...")
   (if (and (> (count (:data @column)) 0)
            (not (:loading @column))
            (not (:loading-bottom @column))
