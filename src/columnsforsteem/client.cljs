@@ -539,6 +539,107 @@
                 :on-click (fn [] (swap! state update :expanded not))}
           (if (:expanded @state) "^" "v")]]))))
 
+(defn column-header [column remove-fn scroll-view]
+  (let [header (atom nil)
+        header-wrapper (atom nil)]
+    (fn [column remove-fn scrol-view]
+      [:div {:ref (fn [el] (reset! header el))
+             :style {:background (if (setting-for :dark-mode)
+                                   (color :grey800)
+                                   (color :blue500))
+                     :color "white"
+                     :padding 10
+                     :display "flex"
+                     :align-items "center"}
+             :on-click (fn [e]
+                         (when @scroll-view
+                           (when (or (= (.-target e) @header)
+                                     (= (.-target e) @header-wrapper))
+                             (scroll-element @scroll-view 500))))}
+       [:div {:ref (fn [el] (reset! header-wrapper el))
+              :style {:flex 1
+                      :display "flex"
+                      :align-items "center"
+                      :overflow "hidden"}}
+        (if (or (= "blog" (:path @column))
+                (= "feed" (:path @column)))
+          [ui/drop-down-menu {:value (:path @column)
+                              :on-change (fn [e key value]
+                                           (when-not (= value (:path @column))
+                                             (swap! column assoc :data []
+                                                                 :path value
+                                                                 :more nil)
+                                             (load-column column :forced true)
+                                             (save-columns)))
+                              :style {:background (if (setting-for :dark-mode)
+                                                    (color :grey900)
+                                                    (color :blue300))
+                                      :height 28}
+                              :underline-style {:display "none"}
+                              :icon-style {:display "none"}
+                              :label-style {:padding-left 24
+                                            :padding-right 24
+                                            :height 28
+                                            :line-height "28px"}}
+           [ui/menu-item {:value "blog"
+                          :primary-text "Blog"}]
+           [ui/menu-item {:value "feed"
+                          :primary-text "Feed"}]]
+          [ui/drop-down-menu {:value (:path @column)
+                              :on-change (fn [e key value]
+                                           (when-not (= value (:path @column))
+                                             (swap! column assoc :data []
+                                                                 :path value
+                                                                 :more nil)
+                                             (load-column column :forced true)
+                                             (save-columns)))
+                              :style {:background (if (setting-for :dark-mode)
+                                                    (color :grey900)
+                                                    (color :blue300))
+                                      :height 28}
+                              :underline-style {:display "none"}
+                              :icon-style {:display "none"}
+                              :label-style {:padding-left 24
+                                            :padding-right 24
+                                            :height 28
+                                            :line-height "28px"}}
+           [ui/menu-item {:value "trending"
+                          :primary-text "Trending"}]
+           [ui/menu-item {:value "hot"
+                          :primary-text "Hot"}]
+           [ui/menu-item {:value "created"
+                          :primary-text "New"}]])
+        (if-not (empty? (:tag @column))
+          [ui/chip {:label-style {:line-height "24px"
+                                  :overflow "hidden"
+                                  :text-overflow "ellipsis"}
+                    :label-color (color :white)
+                    :background-color (if (setting-for :dark-mode)
+                                        (color :grey700)
+                                        (color :blue300))
+                    :style {:margin-left 10}}
+           (if (or (= "blog" (:path @column))
+                   (= "feed" (:path @column)))
+             [ui/avatar {:src (avatar-url (:tag @column))
+                         :style {:width 24
+                                 :height 24}}]
+             [ui/avatar {:size 24
+                         :icon (ic/action-label {:style {:margin 0}})
+                         :color (color :grey200)
+                         :style {:width 24
+                                 :height 24
+                                 :line-height "24px"
+                                 :font-size "20px"
+                                 :background-color (if (setting-for :dark-mode)
+                                                     (color :grey500)
+                                                     (color :blue200))}}])
+           (:tag @column)])]
+       [ui/icon-button {:style {:padding 0
+                                :width "auto"
+                                :height "auto"}
+                        :on-click remove-fn}
+        [ic/navigation-close]]])))
+
 (defn column-component [column remove-fn]
   (r/create-class
     {:component-will-mount
@@ -553,9 +654,7 @@
            (.scrollIntoView (r/dom-node this))
            (load-column column))))
      :reagent-render
-     (let [scroll-view (atom nil)
-           header (atom nil)
-           header-wrapper (atom nil)]
+     (let [scroll-view (atom nil)]
        (fn [column remove-fn]
          [ui/paper {:id (:element @column)
                     :class "column"
@@ -567,102 +666,7 @@
                             :overflow "hidden"
                             :min-width 300
                             :max-width 500}}
-          [:div {:ref (fn [el] (reset! header el))
-                 :style {:background (if (setting-for :dark-mode)
-                                       (color :grey800)
-                                       (color :blue500))
-                         :color "white"
-                         :padding 10
-                         :display "flex"
-                         :align-items "center"}
-                 :on-click (fn [e]
-                             (when @scroll-view
-                               (when (or (= (.-target e) @header)
-                                         (= (.-target e) @header-wrapper))
-                                 (scroll-element @scroll-view 500))))}
-           [:div {:ref (fn [el] (reset! header-wrapper el))
-                  :style {:flex 1
-                          :display "flex"
-                          :align-items "center"
-                          :overflow "hidden"}}
-            (if (or (= "blog" (:path @column))
-                    (= "feed" (:path @column)))
-              [ui/drop-down-menu {:value (:path @column)
-                                  :on-change (fn [e key value]
-                                               (when-not (= value (:path @column))
-                                                 (swap! column assoc :data []
-                                                                     :path value
-                                                                     :more nil)
-                                                 (load-column column :forced true)
-                                                 (save-columns)))
-                                  :style {:background (if (setting-for :dark-mode)
-                                                        (color :grey900)
-                                                        (color :blue300))
-                                          :height 28}
-                                  :underline-style {:display "none"}
-                                  :icon-style {:display "none"}
-                                  :label-style {:padding-left 24
-                                                :padding-right 24
-                                                :height 28
-                                                :line-height "28px"}}
-               [ui/menu-item {:value "blog"
-                              :primary-text "Blog"}]
-               [ui/menu-item {:value "feed"
-                              :primary-text "Feed"}]]
-              [ui/drop-down-menu {:value (:path @column)
-                                  :on-change (fn [e key value]
-                                               (when-not (= value (:path @column))
-                                                 (swap! column assoc :data []
-                                                                     :path value
-                                                                     :more nil)
-                                                 (load-column column :forced true)
-                                                 (save-columns)))
-                                  :style {:background (if (setting-for :dark-mode)
-                                                        (color :grey900)
-                                                        (color :blue300))
-                                          :height 28}
-                                  :underline-style {:display "none"}
-                                  :icon-style {:display "none"}
-                                  :label-style {:padding-left 24
-                                                :padding-right 24
-                                                :height 28
-                                                :line-height "28px"}}
-               [ui/menu-item {:value "trending"
-                              :primary-text "Trending"}]
-               [ui/menu-item {:value "hot"
-                              :primary-text "Hot"}]
-               [ui/menu-item {:value "created"
-                              :primary-text "New"}]])
-            (if-not (empty? (:tag @column))
-              [ui/chip {:label-style {:line-height "24px"
-                                      :overflow "hidden"
-                                      :text-overflow "ellipsis"}
-                        :label-color (color :white)
-                        :background-color (if (setting-for :dark-mode)
-                                            (color :grey700)
-                                            (color :blue300))
-                        :style {:margin-left 10}}
-               (if (or (= "blog" (:path @column))
-                       (= "feed" (:path @column)))
-                 [ui/avatar {:src (avatar-url (:tag @column))
-                             :style {:width 24
-                                     :height 24}}]
-                 [ui/avatar {:size 24
-                             :icon (ic/action-label {:style {:margin 0}})
-                             :color (color :grey200)
-                             :style {:width 24
-                                     :height 24
-                                     :line-height "24px"
-                                     :font-size "20px"
-                                     :background-color (if (setting-for :dark-mode)
-                                                         (color :grey500)
-                                                         (color :blue200))}}])
-               (:tag @column)])]
-           [ui/icon-button {:style {:padding 0
-                                    :width "auto"
-                                    :height "auto"}
-                            :on-click remove-fn}
-            [ic/navigation-close]]]
+          [column-header column remove-fn scroll-view]
           [:div {:style {:overflow "hidden"
                          :flex 1
                          :display "flex"
