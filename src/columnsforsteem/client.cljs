@@ -220,8 +220,9 @@
         posts))))
 
 (defn preload-images [images callback]
+  (js/console.log "preload: " images)
   (let [left (atom (count images))
-        preloaded (atom [])]
+        preloaded (atom {})]
     (if (empty? images)
       (callback preloaded)
       (doseq [image-link images]
@@ -233,7 +234,7 @@
                                    (swap! left dec)
                                    (if (<= @left 0) (callback preloaded))))
           (set! (.-src image) image-link)
-          (swap! preloaded conj image))))))
+          (swap! preloaded assoc image-link image))))))
 
 (defn sorted-posts [posts]
   (reverse (sort-by #(get % "created") posts)))
@@ -289,9 +290,11 @@
         :callback
         (fn [result-js]
           (when (= loaded-path (:path @column))
-            (let [result (js->clj result-js)]
+            (let [result (js->clj result-js)
+                  n-posts (new-posts result (:data @column))
+                  images (all-images n-posts)]
               (preload-images
-                (all-images result)
+                images
                 (fn [preloaded]
                   (when (= loaded-path (:path @column))
                     (if (column-at-top column)
@@ -302,7 +305,7 @@
                                         forced
                                         (should-load-fully column))
                                   nil
-                                  (new-posts result (:data @column)))
+                                  n-posts)
                         :data (if (or (empty? (:data @column))
                                       forced
                                       (should-load-fully column))
