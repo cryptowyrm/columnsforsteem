@@ -640,6 +640,82 @@
                         :on-click remove-fn}
         [ic/navigation-close]]])))
 
+(defn column-user-expander [column]
+  [expander {:expanded (setting-for :expand-user)
+             :style-top (if (setting-for :dark-mode)
+                         {:background (color :grey900)}
+                         {:background (color :grey200)})
+             :style-bottom (if (setting-for :dark-mode)
+                             {:background (color :grey800)
+                              :color (color :grey600)
+                              :border-top "1px solid"
+                              :border-color (color :grey900)
+                              :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"}
+                             {:background (color :blue500)
+                              :color (color :blue300)
+                              :border-top "1px solid"
+                              :border-color (color :blue700)
+                              :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"})}
+   (when (:account @column)
+     [:div {:style {:display "flex"
+                    :flex-wrap "wrap"
+                    :justify-content "center"
+                    :align-items "center"
+                    :padding-bottom 2}}
+      (let [metadata (get (:account @column) "json_metadata")
+            parsed (js->clj (if-not (empty? metadata)
+                             (js/JSON.parse metadata)
+                             nil))
+            bio (-> parsed
+                  (get "profile")
+                  (get "about"))]
+       (when bio
+        [ui/paper {:z-depth 1
+                   :style {:margin 5
+                           :padding 5
+                           :text-align "center"}}
+         bio]))
+      (let [line-height "24px"]
+       [:div {:style {:display "flex"
+                      :flex-wrap "wrap"
+                      :justify-content "center"
+                      :align-items "center"}}
+        [ui/chip {:style {:margin 2}
+                  :label-style {:line-height line-height}
+                  :title "Steem Power"}
+         (.toFixed (vests2sp (js/parseFloat (get-in @column [:account "vesting_shares"]))) 3) " SP"]
+        [ui/chip {:style {:margin 2}
+                  :label-style {:line-height line-height}}
+         (get-in @column [:account "balance"])]
+        [ui/chip {:style {:margin 2}
+                  :title "Steem Dollars"
+                  :label-style {:line-height line-height}}
+         (get-in @column [:account "sbd_balance"])]
+        [ui/chip {:style {:margin 2}
+                  :label-style {:line-height line-height}}
+         (str (get-in @column [:account "post_count"]) " posts")]
+        [ui/chip {:style {:margin 2}
+                  :label-style {:line-height line-height}}
+         (str (get-in @column [:account "follower_count"]) " followers")]
+        [ui/chip {:style {:margin 2}
+                  :label-style {:line-height line-height}}
+         (str (get-in @column [:account "following_count"]) " following")]
+        [ui/chip {:style {:margin 2}
+                  :title "Voting Power"
+                  :label-style {:display "flex"
+                                :align-items "center"
+                                :line-height line-height}}
+         [ui/linear-progress
+          {:max 10000
+           :mode "determinate"
+           :value (get-in @column [:account "voting_power"])
+           :color (color :grey500)
+           :style {:height 15
+                   :min-width 80
+                   :margin-right "8px"}}]
+         (.toFixed (/ (get-in @column [:account "voting_power"]) 100) 2)
+         " % VP"]])])])
+
 (defn column-component [column remove-fn]
   (r/create-class
     {:component-will-mount
@@ -673,80 +749,7 @@
                          :flex-direction "column"}}
            (if (or (= "blog" (:path @column))
                    (= "feed" (:path @column)))
-             [expander {:expanded (setting-for :expand-user)
-                        :style-top (if (setting-for :dark-mode)
-                                    {:background (color :grey900)}
-                                    {:background (color :grey200)})
-                        :style-bottom (if (setting-for :dark-mode)
-                                        {:background (color :grey800)
-                                         :color (color :grey600)
-                                         :border-top "1px solid"
-                                         :border-color (color :grey900)
-                                         :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"}
-                                        {:background (color :blue500)
-                                         :color (color :blue300)
-                                         :border-top "1px solid"
-                                         :border-color (color :blue700)
-                                         :box-shadow "rgba(255, 255, 255, 0.1) 0px 1px 1px 0px inset"})}
-              (when (:account @column)
-                [:div {:style {:display "flex"
-                               :flex-wrap "wrap"
-                               :justify-content "center"
-                               :align-items "center"
-                               :padding-bottom 2}}
-                 (let [metadata (get (:account @column) "json_metadata")
-                       parsed (js->clj (if-not (empty? metadata)
-                                        (js/JSON.parse metadata)
-                                        nil))
-                       bio (-> parsed
-                             (get "profile")
-                             (get "about"))]
-                  (when bio
-                   [ui/paper {:z-depth 1
-                              :style {:margin 5
-                                      :padding 5
-                                      :text-align "center"}}
-                    bio]))
-                 (let [line-height "24px"]
-                  [:div {:style {:display "flex"
-                                 :flex-wrap "wrap"
-                                 :justify-content "center"
-                                 :align-items "center"}}
-                   [ui/chip {:style {:margin 2}
-                             :label-style {:line-height line-height}
-                             :title "Steem Power"}
-                    (.toFixed (vests2sp (js/parseFloat (get-in @column [:account "vesting_shares"]))) 3) " SP"]
-                   [ui/chip {:style {:margin 2}
-                             :label-style {:line-height line-height}}
-                    (get-in @column [:account "balance"])]
-                   [ui/chip {:style {:margin 2}
-                             :title "Steem Dollars"
-                             :label-style {:line-height line-height}}
-                    (get-in @column [:account "sbd_balance"])]
-                   [ui/chip {:style {:margin 2}
-                             :label-style {:line-height line-height}}
-                    (str (get-in @column [:account "post_count"]) " posts")]
-                   [ui/chip {:style {:margin 2}
-                             :label-style {:line-height line-height}}
-                    (str (get-in @column [:account "follower_count"]) " followers")]
-                   [ui/chip {:style {:margin 2}
-                             :label-style {:line-height line-height}}
-                    (str (get-in @column [:account "following_count"]) " following")]
-                   [ui/chip {:style {:margin 2}
-                             :title "Voting Power"
-                             :label-style {:display "flex"
-                                           :align-items "center"
-                                           :line-height line-height}}
-                    [ui/linear-progress
-                     {:max 10000
-                      :mode "determinate"
-                      :value (get-in @column [:account "voting_power"])
-                      :color (color :grey500)
-                      :style {:height 15
-                              :min-width 80
-                              :margin-right "8px"}}]
-                    (.toFixed (/ (get-in @column [:account "voting_power"]) 100) 2)
-                    " % VP"]])])])
+             [column-user-expander column])
            [:div {:class "scroll-view"
                   :ref (fn [el]
                          (reset! scroll-view el))
