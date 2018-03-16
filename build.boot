@@ -6,7 +6,7 @@
                   [crisptrutski/boot-cljs-test "0.3.5-SNAPSHOT" :scope "test"]
                   [nightlight "2.0.4" :scope "test"]
                   [proto-repl "0.3.1" :scope "test"]
-                  [binaryage/devtools "0.9.8" :scope "test"]
+                  [binaryage/devtools "0.9.9" :scope "test"]
                   [binaryage/dirac "RELEASE" :scope "test"]
                   [powerlaces/boot-cljs-devtools "0.2.0" :scope "test"]
                   ; project deps
