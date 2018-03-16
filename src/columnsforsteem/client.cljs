@@ -11,7 +11,8 @@
   {:hide-nsfw true
    :dark-mode true
    :expand-user true
-   :show-reblogs true})
+   :show-reblogs true
+   :big-pictures false})
 
 (defonce
   app-state
@@ -84,7 +85,9 @@
   (str "https://steemitimages.com/u/" user "/avatar/small"))
 
 (defn cached-image [url]
-  (str "https://steemitimages.com/640x480/" url))
+  (if (setting-for :big-pictures)
+    (str "https://steemitimages.com/640x480/" url)
+    (str "https://steemitimages.com/100x100/" url)))
 
 (defn format-time [time]
   (.toLocaleString (js/Date. (str time "Z"))))
@@ -455,6 +458,7 @@
     [:div {:style {:display "flex"
                    :justify-content "space-between"
                    :align-items "center"
+                   :clear (when-not (setting-for :big-pictures) "both")
                    :padding 5}}
      [ic/hardware-keyboard-arrow-up {:color icon-color
                                      :style {:width icon-size
@@ -492,17 +496,37 @@
        (if-let [image (parse-image-url item)]
          (when-not (and (setting-for :hide-nsfw)
                         (> (count (filter #(= % "nsfw") (get metadata "tags"))) 0))
-           [ui/card-media
-            [:img {:src (cached-image image)}]]))
-       [ui/card-title {:title (get item "title")
+           (if (setting-for :big-pictures)
+             [ui/card-media
+              [:img {:src (cached-image image)}]]
+             [ui/card-media
+              {:style {:width 100
+                       :max-height 100
+                       :background "black"
+                       :display "flex"
+                       :align-items "center"
+                       :justify-content "center"
+                       :border-radius 8
+                       :overflow "hidden"
+                       :margin-left 5
+                       :float "right"}}
+              [:img {:src (cached-image image)}]])))
+       [ui/card-title {:title (r/as-element
+                               [:a {:target "_blank"
+                                    :href (str "https://www.steemit.com" (get item "url"))
+                                    :style {:text-decoration "none"
+                                            :color (if (setting-for :dark-mode)
+                                                     "rgba(255, 255, 255, 0.87)"
+                                                     "rgba(0, 0, 0, 0.87)")}}
+                                (get item "title")])
+                       :style (if (setting-for :big-pictures)
+                                {:padding-top 16}
+                                {:padding-top 0})
                        :title-style {:font-size 18
                                      :line-height "24px"}
                        :subtitle (r/as-element [card-subtitle item])}]
-       [ui/card-actions {:style {:display "flex"
-                                 :justify-content "center"}}
-        [:a {:target "_blank"
-             :href (str "https://www.steemit.com" (get item "url"))}
-         [ui/flat-button {:label "Read on Steemit"}]]]])))
+       [ui/card-actions {:style {:display "none"
+                                 :justify-content "center"}}]])))
 
 (defn expander [arg1 & arg2]
   (let [props (if arg2 arg1 {})
@@ -740,7 +764,7 @@
                             :display "flex"
                             :flex-direction "column"
                             :overflow "hidden"
-                            :min-width 300
+                            :min-width 400
                             :max-width 500}}
           [column-header column remove-fn scroll-view]
           [:div {:style {:overflow "hidden"
@@ -879,6 +903,15 @@
                             {:toggled (setting-for :show-reblogs)
                              :on-toggle (fn [e toggled]
                                           (swap! settings assoc :show-reblogs toggled)
+                                          (save-settings))}])}]
+        [ui/list-item {:primary-text "Big pictures"
+                       :title "If activated, a large picture will be shown for posts instead of a small thumbnail"
+                       :right-toggle
+                         (r/as-element
+                           [ui/toggle
+                            {:toggled (setting-for :big-pictures)
+                             :on-toggle (fn [e toggled]
+                                          (swap! settings assoc :big-pictures toggled)
                                           (save-settings))}])}]
         [ui/subheader "Info"]
         [:a {:target "_blank"
