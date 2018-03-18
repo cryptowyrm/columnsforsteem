@@ -572,6 +572,10 @@
                    :text-align "center"
                    :font-size 16
                    :z-index 10000
+                   :display (when (or
+                                    (:loading @column)
+                                    (:loading-bottom @column))
+                              "none")
                    :width "100%"}}
      [:span {:style {:background "silver"
                      :box-shadow "0px 0px 5px rgb(0, 0, 0, 0.5)"
