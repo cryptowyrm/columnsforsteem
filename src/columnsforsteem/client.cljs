@@ -563,16 +563,66 @@
                 :on-click (fn [] (swap! state update :expanded not))}
           (if (:expanded @state) "^" "v")]]))))
 
+(defn column-move-handle [column]
+  (let [columns (r/cursor app-state [:columns])
+        old-index (.indexOf @columns @column)]
+    [:div {:class "move-handle"
+           :style {:position "absolute"
+                   :top -6
+                   :text-align "center"
+                   :font-size 16
+                   :z-index 10000
+                   :width "100%"}}
+     [:span {:style {:background "silver"
+                     :box-shadow "0px 0px 5px rgb(0, 0, 0, 0.5)"
+                     :border-radius 8
+                     :padding 5
+                     :padding-left 5
+                     :padding-right 5}}
+      [:span
+       {:class "arrow"
+        :on-click (fn []
+                    (let [new-index (- old-index 1)
+                          new-columns (apply conj
+                                        (subvec @columns 0 new-index)
+                                        @column
+                                        (first (subvec @columns new-index))
+                                        (subvec @columns (+ old-index 1)))]
+                      (reset! columns new-columns)
+                      (save-columns)))
+        :style {:margin 5
+                :display (when (< old-index 1)
+                           "none")}}
+       "<-"]
+      [:span "Move"]
+      [:span
+       {:class "arrow"
+        :on-click (fn []
+                    (let [new-index (+ old-index 1)
+                          new-columns (apply conj
+                                        (subvec @columns 0 old-index)
+                                        (fnext (subvec @columns old-index))
+                                        @column
+                                        (subvec @columns (+ 1 new-index)))]
+                      (reset! columns new-columns)
+                      (save-columns)))
+        :style {:margin 5
+                :display (when (= (+ old-index 1) (count @columns))
+                           "none")}}
+       "->"]]]))
+
 (defn column-header [column remove-fn scroll-view]
   (let [header (atom nil)
         header-wrapper (atom nil)]
     (fn [column remove-fn scrol-view]
-      [:div {:ref (fn [el] (reset! header el))
+      [:div {:class "column-header"
+             :ref (fn [el] (reset! header el))
              :style {:background (if (setting-for :dark-mode)
                                    (color :grey800)
                                    (color :blue500))
                      :color "white"
                      :padding 10
+                     :position "relative"
                      :display "flex"
                      :align-items "center"}
              :on-click (fn [e]
@@ -580,6 +630,7 @@
                            (when (or (= (.-target e) @header)
                                      (= (.-target e) @header-wrapper))
                              (scroll-element @scroll-view 500))))}
+       [column-move-handle column]
        [:div {:ref (fn [el] (reset! header-wrapper el))
               :style {:flex 1
                       :display "flex"
@@ -763,7 +814,6 @@
                             :flex 1
                             :display "flex"
                             :flex-direction "column"
-                            :overflow "hidden"
                             :min-width 400
                             :max-width 500}}
           [column-header column remove-fn scroll-view]
