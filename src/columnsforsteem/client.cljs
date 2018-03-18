@@ -1043,7 +1043,8 @@
                   (r/after-render
                     (fn []
                       (when target
-                        (.scrollIntoView target)
+                        (let [target-height (.-clientHeight target)]
+                          (.scrollTo scroll-view 0 target-height))
                         (scroll-element scroll-view 500)))))))))
         3000)
       (reset! refresh-interval
