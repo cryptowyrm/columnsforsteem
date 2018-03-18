@@ -577,7 +577,7 @@
                                     (:loading-bottom @column))
                               "none")
                    :width "100%"}}
-     [:span {:style {:background "silver"
+     [:span {:style {:background "#242424"
                      :box-shadow "0px 0px 5px rgb(0, 0, 0, 0.5)"
                      :border-radius 8
                      :padding 5
@@ -594,11 +594,15 @@
                                         (subvec @columns (+ old-index 1)))]
                       (reset! columns new-columns)
                       (save-columns)))
-        :style {:margin 5
+        :style {:padding 5
+                :border-right "1px solid #3e3e3e"
+                :box-shadow "inset -1px 0px 1px #000"
                 :display (when (< old-index 1)
                            "none")}}
        "<-"]
-      [:span "Move"]
+      [:span
+       {:style {:padding 5}}
+       "Move"]
       [:span
        {:class "arrow"
         :on-click (fn []
@@ -610,7 +614,9 @@
                                         (subvec @columns (+ 1 new-index)))]
                       (reset! columns new-columns)
                       (save-columns)))
-        :style {:margin 5
+        :style {:padding 5
+                :border-left "1px solid #3e3e3e"
+                :box-shadow "inset 1px 0px 1px #000"
                 :display (when (= (+ old-index 1) (count @columns))
                            "none")}}
        "->"]]]))
