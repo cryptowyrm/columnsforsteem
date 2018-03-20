@@ -59,6 +59,16 @@
                     @columns)]
     (.setItem js/localStorage "columns" (js/JSON.stringify (clj->js condensed)))))
 
+(defn check-version []
+  (let [settings (r/cursor app-state [:settings])
+        show-update (r/cursor app-state [:show-update])]
+    (-> (js/fetch "update.json")
+        (.then (fn [result]
+                 (.text result)))
+        (.then (fn [result]
+                 (if-not (= (setting-for :last-updated) result)
+                   (reset! show-update result)))))))
+
 (def image-regex
   #"(?i)https?://[^\s<>\[\]]*\.(jpe?g|png|gif)(\?[A-Za-z0-9!$&'()*+.,;=]*\b)?")
 
@@ -1061,7 +1071,9 @@
 
 (defn content []
   (let [columns (r/cursor app-state [:columns])
-        show-column-dialog (r/atom false)]
+        show-column-dialog (r/atom false)
+        show-update (r/cursor app-state [:show-update])
+        settings (r/cursor app-state [:settings])]
     (fn []
       [ui/mui-theme-provider
        (if (setting-for :dark-mode)
@@ -1105,11 +1117,23 @@
                        :on-left-icon-button-touch-tap
                        (fn []
                          (swap! app-state assoc :drawer-open (not (:drawer-open @app-state))))
+                       :icon-style-right {:margin-top 0}
                        :icon-element-right
                        (r/as-element
-                         [ui/flat-button
-                          {:label "Add column"
-                           :on-click #(reset! show-column-dialog true)}])}]]
+                         [:div {:style {:line-height "64px"}}
+                          (if @show-update
+                            [:a {:target "_blank"
+                                 :href @show-update}
+                             [ui/flat-button
+                              {:label "Just updated!"
+                               :secondary true
+                               :on-click (fn []
+                                           (swap! settings assoc :last-updated @show-update)
+                                           (save-settings)
+                                           (reset! show-update nil))}]])
+                          [ui/flat-button
+                           {:label "Add column"
+                            :on-click #(reset! show-column-dialog true)}]])}]]
          [column-dialog show-column-dialog]
          [ui/paper {:id "columns"
                     :rounded false
@@ -1143,6 +1167,7 @@
       (fn []
         (update-columns-with-account))
       (* 5 60000)) ; update every 5 minutes
+    (check-version)
     (reset! initial-startup true))
 
   (r/render-component [content]
