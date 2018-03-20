@@ -18,6 +18,7 @@
   app-state
   (r/atom {:drawer-open false
            :settings (default-settings)
+           :preview-image nil
            :columns [{:id (random-uuid) :path "created" :tag "technology"}
                      {:id (random-uuid) :path "created" :tag "news"}
                      {:id (random-uuid) :path "hot"}
@@ -83,6 +84,9 @@
 
 (defn avatar-url [user]
   (str "https://steemitimages.com/u/" user "/avatar/small"))
+
+(defn big-picture [url]
+  (str "https://steemitimages.com/0x0/" url))
 
 (defn cached-image [url]
   (if (setting-for :big-pictures)
@@ -457,9 +461,13 @@
         icon-color (if dark-mode (color :grey300) (color :grey600))]
     [:div {:style {:display "flex"
                    :justify-content "space-between"
+                   :font-size "14px"
+                   :color (if (setting-for :dark-mode)
+                            "rgba(255, 255, 255, 0.54)"
+                            "rgba(0, 0, 0, 0.54)")
                    :align-items "center"
                    :clear (when-not (setting-for :big-pictures) "both")
-                   :padding 5}}
+                   :padding 10}}
      [ic/hardware-keyboard-arrow-up {:color icon-color
                                      :style {:width icon-size
                                              :height icon-size}}]
@@ -477,7 +485,9 @@
         (get item "total_payout_value"))]]))
 
 (defn post-card [item reblog]
-  (let [metadata (js->clj (js/JSON.parse (get item "json_metadata")))]
+  (let [metadata (js->clj (js/JSON.parse (get item "json_metadata")))
+        preview-image (r/cursor app-state [:preview-image])
+        preview-preloaded (r/cursor app-state [:preview-preloaded])]
     (fn [item]
       (setting-for :dark-mode) ; hack to make posts rerender when toggling theme
       [ui/card {:id (str "post-" (get item "id"))
@@ -493,38 +503,50 @@
                                     :class "hover-cursor"
                                     :on-click #(add-column (str "@" (get item "author")))}])
                         :subtitle (format-time (get item "created"))}]
-       (if-let [image (parse-image-url item)]
-         (when-not (and (setting-for :hide-nsfw)
-                        (> (count (filter #(= % "nsfw") (get metadata "tags"))) 0))
-           (if (setting-for :big-pictures)
-             [ui/card-media
-              [:img {:src (cached-image image)}]]
-             [ui/card-media
-              {:style {:width 100
-                       :max-height 100
-                       :background "black"
-                       :display "flex"
-                       :align-items "center"
-                       :justify-content "center"
-                       :border-radius 8
-                       :overflow "hidden"
-                       :margin-left 5
-                       :float "right"}}
-              [:img {:src (cached-image image)}]])))
-       [ui/card-title {:title (r/as-element
-                               [:a {:target "_blank"
-                                    :href (str "https://www.steemit.com" (get item "url"))
-                                    :style {:text-decoration "none"
-                                            :color (if (setting-for :dark-mode)
-                                                     "rgba(255, 255, 255, 0.87)"
-                                                     "rgba(0, 0, 0, 0.87)")}}
-                                (get item "title")])
-                       :style (if (setting-for :big-pictures)
-                                {:padding-top 16}
-                                {:padding-top 0})
-                       :title-style {:font-size 18
-                                     :line-height "24px"}
-                       :subtitle (r/as-element [card-subtitle item])}]
+       [:div
+        {:style {:display (when-not (setting-for :big-pictures) "flex")}}
+        [ui/card-title {:title (r/as-element
+                                [:a {:target "_blank"
+                                     :href (str "https://www.steemit.com" (get item "url"))
+                                     :style {:text-decoration "none"
+                                             :color (if (setting-for :dark-mode)
+                                                      "rgba(255, 255, 255, 0.87)"
+                                                      "rgba(0, 0, 0, 0.87)")}}
+                                 (get item "title")])
+                        :style {:padding-top 0
+                                :flex 1}
+                        :title-style {:font-size 18
+                                      :line-height "24px"}}]
+        (if-let [image (parse-image-url item)]
+          (when-not (and (setting-for :hide-nsfw)
+                         (> (count (filter #(= % "nsfw") (get metadata "tags"))) 0))
+            (if (setting-for :big-pictures)
+              [ui/card-media
+               {:on-click (fn []
+                           (reset! preview-image image)
+                           (preload-images [(big-picture image)]
+                                           #(reset! preview-preloaded %))
+                           (js/console.log "Preview image:")
+                           (js/console.log @preview-image))}
+               [:img {:src (cached-image image)}]]
+              [ui/card-media
+               {:style {:width 100
+                        :max-height 100
+                        :background "black"
+                        :display "flex"
+                        :align-items "center"
+                        :justify-content "center"
+                        :border-radius 8
+                        :overflow "hidden"
+                        :margin-left 5}
+                :on-click (fn []
+                            (reset! preview-image image)
+                            (preload-images [(big-picture image)]
+                                            #(reset! preview-preloaded %))
+                            (js/console.log "Preview image:")
+                            (js/console.log @preview-image))}
+               [:img {:src (cached-image image)}]])))]
+       [card-subtitle item]
        [ui/card-actions {:style {:display "none"
                                  :justify-content "center"}}]])))
 
@@ -994,6 +1016,47 @@
          [ui/list-item
           "@crypticwyrm on Steem"]]]])))
 
+(defn preview-dialog []
+  (let [preview-image (r/cursor app-state [:preview-image])
+        preview-preloaded (r/cursor app-state [:preview-preloaded])
+        reset-fn (fn []
+                   (reset! preview-image nil)
+                   (reset! preview-preloaded nil))]
+    [:div {:style {:display (when-not @preview-image "none")}}
+     [:div {:on-click reset-fn
+            :style {:background "black"
+                    :opacity 0.6
+                    :position "absolute"
+                    :top 0
+                    :left 0
+                    :bottom 0
+                    :right 0
+                    :z-index 9999}}]
+     [ui/paper {:on-click reset-fn
+                :style {:position "absolute"
+                        :top 40
+                        :left 40
+                        :bottom 40
+                        :right 40
+                        :z-index 10000
+                        :z-depth 5
+                        :padding 20
+                        :display "flex"
+                        :flex-direction "column"
+                        :overflow "hidden"
+                        :white-space "nowrap"}}
+      [:h1 {:style {:text-overflow "ellipsis"
+                    :overflow "hidden"}}
+       (last (clojure.string/split @preview-image #"/"))]
+      (if @preview-preloaded
+        [:div {:src (big-picture @preview-image)
+               :style {:flex 1
+                       :background-image (str "url(" (big-picture @preview-image) ")")
+                       :background-size "contain"
+                       :background-repeat "no-repeat"
+                       :background-position "50% 50%"}}]
+        [:h1 "Loading..."])]]))
+
 (defn content []
   (let [columns (r/cursor app-state [:columns])
         show-column-dialog (r/atom false)]
@@ -1014,6 +1077,7 @@
        [:div {:style {:display "flex"
                       :flex 1
                       :overflow "hidden"}}
+        [preview-dialog]
         [drawer-component]
         [:div {:id "content-wrapper"
                :style {:display "flex"
