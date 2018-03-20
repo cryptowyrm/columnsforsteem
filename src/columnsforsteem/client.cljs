@@ -522,7 +522,8 @@
                          (> (count (filter #(= % "nsfw") (get metadata "tags"))) 0))
             (if (setting-for :big-pictures)
               [ui/card-media
-               {:on-click (fn []
+               {:class "hovercursor"
+                :on-click (fn []
                            (reset! preview-image image)
                            (preload-images [(big-picture image)]
                                            #(reset! preview-preloaded %))
@@ -530,7 +531,8 @@
                            (js/console.log @preview-image))}
                [:img {:src (cached-image image)}]]
               [ui/card-media
-               {:style {:width 100
+               {:class "hovercursor"
+                :style {:width 100
                         :max-height 100
                         :background "black"
                         :display "flex"
