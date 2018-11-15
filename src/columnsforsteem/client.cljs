@@ -501,10 +501,17 @@
     (fn [item]
       (setting-for :dark-mode) ; hack to make posts rerender when toggling theme
       [ui/card {:id (str "post-" (get item "id"))
-                :container-style {:margin-bottom 10
+                :container-style {:background (when (setting-for :dark-mode)
+                                                (color :grey900))
+                                  :border-top (if (setting-for :dark-mode)
+                                                "1px solid #333"
+                                                "1px solid #fff")
+                                  :border-bottom (if (setting-for :dark-mode)
+                                                   "1px solid black"
+                                                   "1px solid #ddd")
                                   :display (when (and (not (setting-for :show-reblogs))
                                                       reblog)
-                                            "none")}}
+                                             "none")}}
        [ui/card-header {:title (get item "author")
                         :avatar (r/as-element
                                   [ui/avatar
@@ -550,7 +557,8 @@
                         :justify-content "center"
                         :border-radius 8
                         :overflow "hidden"
-                        :margin-left 5}
+                        :margin-left 5
+                        :margin-right 10}
                 :on-click (fn []
                             (reset! preview-image image)
                             (preload-images [(big-picture image)]
@@ -882,7 +890,7 @@
                   :style {:flex 1
                           :overflow-y "auto"
                           :overflow-x "hidden"}}
-            [:div {:style {:padding 10}}
+            [:div
              [:div {:style {:position "relative"
                             :width 40
                             :margin-left "auto"
