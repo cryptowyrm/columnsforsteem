@@ -862,7 +862,7 @@
          [ui/paper {:id (:element @column)
                     :class "column"
                     :z-depth 2
-                    :style {:margin-left 10
+                    :style {:margin-left 1
                             :flex 1
                             :display "flex"
                             :flex-direction "column"
@@ -1150,8 +1150,8 @@
                             :overflow "hidden"
                             :overflow-x "auto"
                             :flex 1
-                            :padding-bottom 10
-                            :padding-top 10}}
+                            :padding-bottom 1
+                            :padding-top 1}}
           (map-indexed (fn [idx {id :id}]
                          (let [column (r/cursor app-state [:columns idx])]
                            ^{:key id}
