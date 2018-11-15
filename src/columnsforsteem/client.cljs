@@ -12,7 +12,8 @@
    :dark-mode true
    :expand-user true
    :show-reblogs true
-   :big-pictures false})
+   :big-pictures false
+   :tight-layout true})
 
 (defonce
   app-state
@@ -862,7 +863,9 @@
          [ui/paper {:id (:element @column)
                     :class "column"
                     :z-depth 2
-                    :style {:margin-left 1
+                    :style {:margin-left (if (setting-for :tight-layout)
+                                            1
+                                            10)
                             :flex 1
                             :display "flex"
                             :flex-direction "column"
@@ -1015,6 +1018,15 @@
                              :on-toggle (fn [e toggled]
                                           (swap! settings assoc :big-pictures toggled)
                                           (save-settings))}])}]
+        [ui/list-item {:primary-text "Tight layout"
+                       :title "If activated, there are no margins around columns, saving space"
+                       :right-toggle
+                         (r/as-element
+                           [ui/toggle
+                            {:toggled (setting-for :tight-layout)
+                             :on-toggle (fn [e toggled]
+                                          (swap! settings assoc :tight-layout toggled)
+                                          (save-settings))}])}]
         [ui/subheader "Info"]
         [:a {:target "_blank"
              :href "https://www.steemit.com"
@@ -1096,7 +1108,10 @@
                                        :keywordize-keys true))
                            {})))}
          {:mui-theme (get-mui-theme)})
-       [:div {:style {:display "flex"
+       [:div {:class (if (setting-for :dark-mode)
+                       "dark-theme"
+                       "light-theme")
+              :style {:display "flex"
                       :flex 1
                       :overflow "hidden"}}
         [preview-dialog]
@@ -1144,14 +1159,24 @@
                             :on-click #(reset! show-column-dialog true)}]])}]]
          [column-dialog show-column-dialog]
          [ui/paper {:id "columns"
+                    :class (when-not (setting-for :tight-layout)
+                             "margins")
                     :rounded false
                     :style {:display "flex"
                             :flex-direction "row"
                             :overflow "hidden"
                             :overflow-x "auto"
                             :flex 1
-                            :padding-bottom 1
-                            :padding-top 1}}
+                            :background-color (if (setting-for :dark-mode)
+                                                (color :grey900)
+                                                (when (setting-for :tight-layout)
+                                                  (color :grey900)))
+                            :padding-bottom (if (setting-for :tight-layout)
+                                              1
+                                              10)
+                            :padding-top (if (setting-for :tight-layout)
+                                           1
+                                           10)}}
           (map-indexed (fn [idx {id :id}]
                          (let [column (r/cursor app-state [:columns idx])]
                            ^{:key id}

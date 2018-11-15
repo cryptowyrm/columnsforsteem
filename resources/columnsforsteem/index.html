@@ -47,17 +47,35 @@
       .expander-bottom:hover {
         cursor: pointer;
       }
+
+      #columns.margins:after {
+        content: '';
+        min-width: 10px;
+        height: 1px;
+      }
       
-      ::-webkit-scrollbar {
+      .dark-theme ::-webkit-scrollbar {
         width: 5px;
       }
 
-      ::-webkit-scrollbar-track {
+      .dark-theme ::-webkit-scrollbar-track {
         background: #424242;
       }
 
-      ::-webkit-scrollbar-thumb {
-        background: #666; 
+      .dark-theme ::-webkit-scrollbar-thumb {
+        background: #777; 
+      }
+
+      .light-theme ::-webkit-scrollbar {
+        width: 5px;
+      }
+
+      .light-theme ::-webkit-scrollbar-track {
+        background: #999;
+      }
+
+      .light-theme ::-webkit-scrollbar-thumb {
+        background: #444; 
       }
     </style>
   </head>
