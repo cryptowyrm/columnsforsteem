@@ -4,7 +4,7 @@ A web based multi column client for [Steem](https://steemit.com/), the decentral
 
 Written in [ClojureScript](https://clojurescript.org/) & [Reagent](https://reagent-project.github.io/) (a thin wrapper on top of React). Uses the [dsteem](https://github.com/jnordberg/dsteem) JavaScript libary to connect to Steem.
 
-The app cam be used right in your web browser (Firefox and Chrome are officially supported) at https://cryptcwyrm.neocities.org/columns/ and decentralized on IPFS at https://ipfs.io/ipns/crypticwyrm.neocities.org/columns/
+The app can be used right in your web browser (Firefox and Chrome are officially supported) at https://crypticwyrm.neocities.org/columns/ and decentralized on IPFS at https://ipfs.io/ipns/crypticwyrm.neocities.org/columns/
 
 ![Dark Theme](screenshot_1.png)
 
